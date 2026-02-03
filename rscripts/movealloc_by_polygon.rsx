@@ -19,10 +19,27 @@
 ##Output_Isoline=output vector
 ##Output_Polygon=output vector
 ##showplots
-# Load required libraries
-required_packages <- c("movecost", "sp", "sf","progress", "raster")
-lapply(required_packages, require, character.only = TRUE)
 
+# Function to check and update movecost package
+check_movecost_version <- function(min_version = "2.1") {
+    if (!requireNamespace("movecost", quietly = TRUE)) {
+        message("Installing movecost package...")
+        install.packages("movecost", repos = "https://cloud.r-project.org/")
+    } else {
+        installed_version <- as.character(packageVersion("movecost"))
+        if (compareVersion(installed_version, min_version) < 0) {
+            message(paste("Updating movecost from", installed_version, "to latest version..."))
+            install.packages("movecost", repos = "https://cloud.r-project.org/")
+        }
+    }
+}
+
+# Check and update movecost if needed (minimum version 2.1)
+check_movecost_version("2.1")
+
+# Load required libraries
+required_packages <- c("movecost", "sp", "sf", "progress", "raster")
+lapply(required_packages, require, character.only = TRUE)
 
 # Load libraries
 library(sp)
