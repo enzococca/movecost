@@ -5,12 +5,13 @@
 [general]
 name=movecost
 qgisMinimumVersion=3.0
-description=Rscipt for QGIS for Calculation of Slope-Dependant Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human
-version=2.0
+qgisMaximumVersion=4.99
+description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
+version=2.1
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
-about=Rscipt for QGIS for Calculation of Slope-Dependant Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human
+about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with movecost, sf, and terra packages installed.
 
 tracker=https://github.com/enzococca/movecostTOqgis
 repository=https://github.com/enzococca/movecostTOqgis
@@ -19,8 +20,12 @@ repository=https://github.com/enzococca/movecostTOqgis
 # Recommended items:
 
 hasProcessingProvider=no
-# Uncomment the following line and add your changelog:
-# changelog=
+supportsQt6=True
+
+# Changelog
+changelog=
+    2.1 - Qt6/QGIS 4 compatibility, removed deprecated rgdal dependency, multilingual help files
+    2.0 - Initial release with sf/terra support
 
 # Tags are comma separated with spaces allowed
 tags=python, R

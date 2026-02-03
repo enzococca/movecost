@@ -1,0 +1,16 @@
+{
+    "movecost": "Calcola la superficie di costo accumulata anisotropica dipendente dalla pendenza e i percorsi a costo minimo da un punto di origine",
+    "movecost_polygon": "Calcola la superficie di costo accumulata usando un'area poligonale per definire l'estensione del DTM",
+    "movebound": "Calcola i confini di costo di camminata dipendente dalla pendenza attorno a posizioni puntuali",
+    "movebound_polygon": "Calcola i confini di costo di camminata usando un'area poligonale per definire l'estensione del DTM",
+    "movecorr": "Calcola il corridoio a costo minimo tra posizioni puntuali",
+    "movecorr_polygon": "Calcola il corridoio a costo minimo usando un'area poligonale per definire l'estensione del DTM",
+    "movealloc": "Calcola l'allocazione del costo di camminata dipendente dalla pendenza alle origini",
+    "movealloc_polygon": "Calcola l'allocazione del costo di camminata usando un'area poligonale per definire l'estensione del DTM",
+    "movecomp": "Confronta i percorsi a costo minimo generati usando diverse funzioni di costo",
+    "movecomp_polygon": "Confronta i percorsi a costo minimo usando un'area poligonale per definire l'estensione del DTM",
+    "movenetw": "Calcola la rete di percorsi a costo minimo tra punti multipli",
+    "movenetw_polygon": "Calcola la rete di percorsi a costo minimo usando un'area poligonale per definire l'estensione del DTM",
+    "moverank": "Classifica le destinazioni per costo di camminata da un'origine",
+    "moverank_polygon": "Classifica le destinazioni usando un'area poligonale per definire l'estensione del DTM"
+}

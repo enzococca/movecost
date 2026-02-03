@@ -67,11 +67,9 @@ Move <- get_string_value(Move, move_map)
 # Convert string to logical
 PlotBarrier <- as.logical(PlotBarrier)
 # If PlotBarrier is FALSE, set Barrier and Field to NULL
-if(PlotBarrier==TRUE) {
+if(!PlotBarrier) {
   Barrier <- NULL
   Field <- NULL
-} else {
-  Move <- 8
 }
 IrregularDTM <- as.logical(IrregularDTM)
 

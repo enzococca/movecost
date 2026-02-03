@@ -39,14 +39,65 @@
   <widget class="QPushButton" name="pushButton_add_script">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>120</x>
      <y>260</y>
-     <width>75</width>
+     <width>85</width>
      <height>23</height>
     </rect>
    </property>
    <property name="text">
     <string>Add scripts</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="comboBox_language">
+   <property name="geometry">
+    <rect>
+     <x>210</x>
+     <y>260</y>
+     <width>80</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Select help language</string>
+   </property>
+   <item>
+    <property name="text">
+     <string>English</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Italiano</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Français</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Español</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Deutsch</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QPushButton" name="pushButton_help">
+   <property name="geometry">
+    <rect>
+     <x>295</x>
+     <y>260</y>
+     <width>50</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Help</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_movecost_p">

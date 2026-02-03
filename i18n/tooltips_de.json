@@ -1,0 +1,16 @@
+{
+    "movecost": "Berechnen Sie die anisotrope neigungsabhängige akkumulierte Kostenoberfläche und die kostengünstigsten Pfade von einem Ursprungspunkt",
+    "movecost_polygon": "Berechnen Sie die akkumulierte Kostenoberfläche unter Verwendung eines Polygonbereichs zur Definition der DGM-Ausdehnung",
+    "movebound": "Berechnen Sie neigungsabhängige Gehkostengrenzen um Punktstandorte",
+    "movebound_polygon": "Berechnen Sie Gehkostengrenzen unter Verwendung eines Polygonbereichs zur Definition der DGM-Ausdehnung",
+    "movecorr": "Berechnen Sie den kostengünstigsten Korridor zwischen Punktstandorten",
+    "movecorr_polygon": "Berechnen Sie den kostengünstigsten Korridor unter Verwendung eines Polygonbereichs zur Definition der DGM-Ausdehnung",
+    "movealloc": "Berechnen Sie die neigungsabhängige Gehkostenzuweisung zu Ursprüngen",
+    "movealloc_polygon": "Berechnen Sie die Gehkostenzuweisung unter Verwendung eines Polygonbereichs zur Definition der DGM-Ausdehnung",
+    "movecomp": "Vergleichen Sie kostengünstigste Pfade, die mit verschiedenen Kostenfunktionen generiert wurden",
+    "movecomp_polygon": "Vergleichen Sie kostengünstigste Pfade unter Verwendung eines Polygonbereichs zur Definition der DGM-Ausdehnung",
+    "movenetw": "Berechnen Sie das kostengünstigste Pfadnetzwerk zwischen mehreren Punkten",
+    "movenetw_polygon": "Berechnen Sie das kostengünstigste Pfadnetzwerk unter Verwendung eines Polygonbereichs zur Definition der DGM-Ausdehnung",
+    "moverank": "Rangieren Sie Ziele nach Gehkosten von einem Ursprung",
+    "moverank_polygon": "Rangieren Sie Ziele unter Verwendung eines Polygonbereichs zur Definition der DGM-Ausdehnung"
+}

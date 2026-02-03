@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movecost QGIS Plugin - Hilfe</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2c5aa0; border-bottom: 2px solid #2c5aa0; padding-bottom: 10px; }
+        h2 { color: #3d7eaa; margin-top: 30px; }
+        h3 { color: #555; }
+        .function { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .param { margin-left: 20px; }
+        .param-name { font-weight: bold; color: #2c5aa0; }
+        code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #2c5aa0; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Movecost QGIS Plugin</h1>
+    <p>R-basiertes Werkzeug zur Berechnung von neigungsabhängigen akkumulierten Kostenoberflächen, kostengünstigsten Pfaden und kostengünstigsten Korridoren im Zusammenhang mit menschlicher Bewegung durch die Landschaft.</p>
+
+    <h2>Voraussetzungen</h2>
+    <ul>
+        <li>QGIS 3.0 oder höher (kompatibel mit QGIS 4)</li>
+        <li>Processing R Provider Plugin</li>
+        <li>R mit den Paketen: <code>movecost</code>, <code>sf</code>, <code>terra</code>, <code>raster</code></li>
+    </ul>
+
+    <h2>Verfügbare Funktionen</h2>
+
+    <div class="function">
+        <h3>movecost</h3>
+        <p>Berechnet die anisotropen neigungsabhängigen akkumulierten Bewegungskosten durch das Gelände und die kostengünstigsten Pfade von einem Ursprungspunkt zu einem oder mehreren Zielen.</p>
+    </div>
+
+    <div class="function">
+        <h3>movebound</h3>
+        <p>Berechnet neigungsabhängige Gehkostengrenzen (Isolinien) um einen oder mehrere Punkte.</p>
+    </div>
+
+    <div class="function">
+        <h3>movecorr</h3>
+        <p>Berechnet den kostengünstigsten Korridor zwischen zwei Punkten.</p>
+    </div>
+
+    <div class="function">
+        <h3>movealloc</h3>
+        <p>Berechnet die neigungsabhängige Kostenzuweisung von mehreren Ursprungspunkten, wobei jede Zelle ihrem nächsten Ursprung nach Gehkosten zugewiesen wird.</p>
+    </div>
+
+    <div class="function">
+        <h3>movecomp</h3>
+        <p>Vergleicht kostengünstigste Pfade, die mit verschiedenen Kostenfunktionen generiert wurden, um zu analysieren, wie verschiedene Bewegungsmodelle die Pfadauswahl beeinflussen.</p>
+    </div>
+
+    <div class="function">
+        <h3>movenetw</h3>
+        <p>Berechnet ein Netzwerk kostengünstigster Pfade, das mehrere Punkte verbindet.</p>
+    </div>
+
+    <div class="function">
+        <h3>moverank</h3>
+        <p>Rangiert Zielpunkte nach ihren Gehkosten von einem Ursprungspunkt.</p>
+    </div>
+
+    <h2>Kostenfunktionen</h2>
+    <table>
+        <tr><th>Code</th><th>Name</th><th>Typ</th></tr>
+        <tr><td>t</td><td>Toblers Wanderfunktion (auf dem Weg)</td><td>Gehzeit</td></tr>
+        <tr><td>tofp</td><td>Toblers Wanderfunktion (abseits des Weges)</td><td>Gehzeit</td></tr>
+        <tr><td>mp</td><td>Modifizierte Tobler von Marquez-Perez et al.</td><td>Gehzeit</td></tr>
+        <tr><td>icmonp</td><td>Irmischer-Clarke (männlich, auf dem Weg)</td><td>Gehzeit</td></tr>
+        <tr><td>icmoffp</td><td>Irmischer-Clarke (männlich, abseits)</td><td>Gehzeit</td></tr>
+        <tr><td>icfonp</td><td>Irmischer-Clarke (weiblich, auf dem Weg)</td><td>Gehzeit</td></tr>
+        <tr><td>icfoffp</td><td>Irmischer-Clarke (weiblich, abseits)</td><td>Gehzeit</td></tr>
+        <tr><td>ug</td><td>Uriarte González</td><td>Gehzeit</td></tr>
+        <tr><td>ma</td><td>Marín Arroyo</td><td>Gehzeit</td></tr>
+        <tr><td>alb</td><td>Alberti (pastorale Sammeltätigkeit)</td><td>Gehzeit</td></tr>
+        <tr><td>gkrs</td><td>Garmy, Kaddouri, Rozenblat, Schneider</td><td>Gehzeit</td></tr>
+        <tr><td>r</td><td>Rees</td><td>Gehzeit</td></tr>
+        <tr><td>ks</td><td>Kondo-Seino</td><td>Gehzeit</td></tr>
+        <tr><td>trp</td><td>Tripcevich</td><td>Gehzeit</td></tr>
+        <tr><td>wcs</td><td>Kritische Neigung für Radfahrzeuge</td><td>Radfahrzeuge</td></tr>
+        <tr><td>ree</td><td>Relativer Energieaufwand</td><td>Abstrakter Kosten</td></tr>
+        <tr><td>b</td><td>Bellavia</td><td>Abstrakter Kosten</td></tr>
+        <tr><td>e</td><td>Eastman</td><td>Abstrakter Kosten</td></tr>
+        <tr><td>p</td><td>Pandolf et al.</td><td>Metabolische Energie</td></tr>
+        <tr><td>pcf</td><td>Pandolf mit Korrekturfaktor</td><td>Metabolische Energie</td></tr>
+        <tr><td>m</td><td>Minetti et al.</td><td>Metabolische Energie</td></tr>
+        <tr><td>hrz</td><td>Herzog</td><td>Metabolische Energie</td></tr>
+        <tr><td>vl</td><td>Van Leusen</td><td>Metabolische Energie</td></tr>
+        <tr><td>ls</td><td>Llobera-Sluckin</td><td>Metabolische Energie</td></tr>
+        <tr><td>a</td><td>Ardigo et al.</td><td>Metabolische Energie</td></tr>
+        <tr><td>h</td><td>Hare</td><td>Metabolische Energie</td></tr>
+    </table>
+
+    <h2>Gemeinsame Parameter</h2>
+    <div class="param">
+        <p><span class="param-name">DTM/Area_of_interest</span>: Digitales Geländemodell-Raster oder Polygon zum Herunterladen des DGM aus Online-Quellen.</p>
+        <p><span class="param-name">Origin</span>: Punkt(e), von denen aus die Kosten berechnet werden.</p>
+        <p><span class="param-name">Destination</span>: Punkt(e), zu denen die kostengünstigsten Pfade berechnet werden.</p>
+        <p><span class="param-name">Move</span>: Zellkonnektivität (4, 8 oder 16 Richtungen).</p>
+        <p><span class="param-name">Function</span>: Zu verwendende Kostenfunktion (siehe Tabelle oben).</p>
+        <p><span class="param-name">Time</span>: Zeiteinheit ('h' für Stunden, 'm' für Minuten).</p>
+        <p><span class="param-name">Cognitive_Slope</span>: Wahrgenommene Neigung anstelle der tatsächlichen verwenden.</p>
+        <p><span class="param-name">Walker_Body_Weight</span>: Körpergewicht des Wanderers in kg (Standard: 70).</p>
+        <p><span class="param-name">Carried_Load_Weight</span>: Lastgewicht in kg (Standard: 0).</p>
+    </div>
+
+    <h2>Danksagungen</h2>
+    <p><strong>Plugin:</strong> Enzo Cocca (adArte srl)</p>
+    <p><strong>R-Paket:</strong> Gianmarco Alberti</p>
+    <p><strong>Repository:</strong> <a href="https://github.com/enzococca/movecostTOqgis">github.com/enzococca/movecostTOqgis</a></p>
+</body>
+</html>

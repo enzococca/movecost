@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movecost QGIS Plugin - Help</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2c5aa0; border-bottom: 2px solid #2c5aa0; padding-bottom: 10px; }
+        h2 { color: #3d7eaa; margin-top: 30px; }
+        h3 { color: #555; }
+        .function { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .param { margin-left: 20px; }
+        .param-name { font-weight: bold; color: #2c5aa0; }
+        code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #2c5aa0; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Movecost QGIS Plugin</h1>
+    <p>R-based tool for calculation of slope-dependent accumulated cost surface, least-cost paths, and least-cost corridors related to human movement across the landscape.</p>
+
+    <h2>Requirements</h2>
+    <ul>
+        <li>QGIS 3.0 or higher (compatible with QGIS 4)</li>
+        <li>Processing R Provider plugin</li>
+        <li>R with packages: <code>movecost</code>, <code>sf</code>, <code>terra</code>, <code>raster</code></li>
+    </ul>
+
+    <h2>Available Functions</h2>
+
+    <div class="function">
+        <h3>movecost</h3>
+        <p>Calculates accumulated anisotropic slope-dependent cost of movement across the terrain and least-cost paths from a point origin to one or more destinations.</p>
+    </div>
+
+    <div class="function">
+        <h3>movebound</h3>
+        <p>Calculates slope-dependent walking cost boundaries (isolines) around one or more point locations.</p>
+    </div>
+
+    <div class="function">
+        <h3>movecorr</h3>
+        <p>Calculates the least-cost corridor between two point locations.</p>
+    </div>
+
+    <div class="function">
+        <h3>movealloc</h3>
+        <p>Calculates slope-dependent cost allocation from multiple origin points, assigning each cell to its nearest origin by walking cost.</p>
+    </div>
+
+    <div class="function">
+        <h3>movecomp</h3>
+        <p>Compares least-cost paths generated using different cost functions to analyze how different movement models affect path selection.</p>
+    </div>
+
+    <div class="function">
+        <h3>movenetw</h3>
+        <p>Calculates a least-cost path network connecting multiple point locations.</p>
+    </div>
+
+    <div class="function">
+        <h3>moverank</h3>
+        <p>Ranks destination points by their walking cost from an origin point.</p>
+    </div>
+
+    <h2>Cost Functions</h2>
+    <table>
+        <tr><th>Code</th><th>Name</th><th>Type</th></tr>
+        <tr><td>t</td><td>Tobler's hiking function (on-path)</td><td>Walking time</td></tr>
+        <tr><td>tofp</td><td>Tobler's hiking function (off-path)</td><td>Walking time</td></tr>
+        <tr><td>mp</td><td>Marquez-Perez et al.'s modified Tobler</td><td>Walking time</td></tr>
+        <tr><td>icmonp</td><td>Irmischer-Clarke (male, on-path)</td><td>Walking time</td></tr>
+        <tr><td>icmoffp</td><td>Irmischer-Clarke (male, off-path)</td><td>Walking time</td></tr>
+        <tr><td>icfonp</td><td>Irmischer-Clarke (female, on-path)</td><td>Walking time</td></tr>
+        <tr><td>icfoffp</td><td>Irmischer-Clarke (female, off-path)</td><td>Walking time</td></tr>
+        <tr><td>ug</td><td>Uriarte González</td><td>Walking time</td></tr>
+        <tr><td>ma</td><td>Marín Arroyo</td><td>Walking time</td></tr>
+        <tr><td>alb</td><td>Alberti (pastoral foraging)</td><td>Walking time</td></tr>
+        <tr><td>gkrs</td><td>Garmy, Kaddouri, Rozenblat, Schneider</td><td>Walking time</td></tr>
+        <tr><td>r</td><td>Rees</td><td>Walking time</td></tr>
+        <tr><td>ks</td><td>Kondo-Seino</td><td>Walking time</td></tr>
+        <tr><td>trp</td><td>Tripcevich</td><td>Walking time</td></tr>
+        <tr><td>wcs</td><td>Wheeled-vehicle critical slope</td><td>Wheeled vehicles</td></tr>
+        <tr><td>ree</td><td>Relative energetic expenditure</td><td>Abstract cost</td></tr>
+        <tr><td>b</td><td>Bellavia</td><td>Abstract cost</td></tr>
+        <tr><td>e</td><td>Eastman</td><td>Abstract cost</td></tr>
+        <tr><td>p</td><td>Pandolf et al.</td><td>Metabolic energy</td></tr>
+        <tr><td>pcf</td><td>Pandolf with correction factor</td><td>Metabolic energy</td></tr>
+        <tr><td>m</td><td>Minetti et al.</td><td>Metabolic energy</td></tr>
+        <tr><td>hrz</td><td>Herzog</td><td>Metabolic energy</td></tr>
+        <tr><td>vl</td><td>Van Leusen</td><td>Metabolic energy</td></tr>
+        <tr><td>ls</td><td>Llobera-Sluckin</td><td>Metabolic energy</td></tr>
+        <tr><td>a</td><td>Ardigo et al.</td><td>Metabolic energy</td></tr>
+        <tr><td>h</td><td>Hare</td><td>Metabolic energy</td></tr>
+    </table>
+
+    <h2>Common Parameters</h2>
+    <div class="param">
+        <p><span class="param-name">DTM/Area_of_interest</span>: Digital Terrain Model raster or polygon to download DTM from online sources.</p>
+        <p><span class="param-name">Origin</span>: Point location(s) from which costs are calculated.</p>
+        <p><span class="param-name">Destination</span>: Point location(s) to which least-cost paths are calculated.</p>
+        <p><span class="param-name">Move</span>: Cell connectivity (4, 8, or 16 directions).</p>
+        <p><span class="param-name">Function</span>: Cost function to use (see table above).</p>
+        <p><span class="param-name">Time</span>: Time unit ('h' for hours, 'm' for minutes).</p>
+        <p><span class="param-name">Cognitive_Slope</span>: Use perceptual slope instead of real slope.</p>
+        <p><span class="param-name">Walker_Body_Weight</span>: Walker's weight in kg (default: 70).</p>
+        <p><span class="param-name">Carried_Load_Weight</span>: Load weight in kg (default: 0).</p>
+    </div>
+
+    <h2>Credits</h2>
+    <p><strong>Plugin:</strong> Enzo Cocca (adArte srl)</p>
+    <p><strong>R Package:</strong> Gianmarco Alberti</p>
+    <p><strong>Repository:</strong> <a href="https://github.com/enzococca/movecostTOqgis">github.com/enzococca/movecostTOqgis</a></p>
+</body>
+</html>

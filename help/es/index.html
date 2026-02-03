@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Movecost para QGIS - Ayuda</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2c5aa0; border-bottom: 2px solid #2c5aa0; padding-bottom: 10px; }
+        h2 { color: #3d7eaa; margin-top: 30px; }
+        h3 { color: #555; }
+        .function { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .param { margin-left: 20px; }
+        .param-name { font-weight: bold; color: #2c5aa0; }
+        code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #2c5aa0; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Plugin Movecost para QGIS</h1>
+    <p>Herramienta basada en R para el cálculo de superficies de costo acumulado dependiente de la pendiente, rutas de menor costo y corredores de menor costo relacionados con el movimiento humano en el paisaje.</p>
+
+    <h2>Requisitos</h2>
+    <ul>
+        <li>QGIS 3.0 o superior (compatible con QGIS 4)</li>
+        <li>Plugin Processing R Provider</li>
+        <li>R con los paquetes: <code>movecost</code>, <code>sf</code>, <code>terra</code>, <code>raster</code></li>
+    </ul>
+
+    <h2>Funciones Disponibles</h2>
+
+    <div class="function">
+        <h3>movecost</h3>
+        <p>Calcula el costo acumulado anisotrópico dependiente de la pendiente del movimiento a través del terreno y las rutas de menor costo desde un punto de origen hacia uno o más destinos.</p>
+    </div>
+
+    <div class="function">
+        <h3>movebound</h3>
+        <p>Calcula los límites de costo de caminata (isolíneas) dependientes de la pendiente alrededor de uno o más puntos.</p>
+    </div>
+
+    <div class="function">
+        <h3>movecorr</h3>
+        <p>Calcula el corredor de menor costo entre dos puntos.</p>
+    </div>
+
+    <div class="function">
+        <h3>movealloc</h3>
+        <p>Calcula la asignación de costo dependiente de la pendiente desde puntos de origen múltiples, asignando cada celda a su origen más cercano por costo de caminata.</p>
+    </div>
+
+    <div class="function">
+        <h3>movecomp</h3>
+        <p>Compara las rutas de menor costo generadas usando diferentes funciones de costo para analizar cómo diferentes modelos de movimiento afectan la selección de la ruta.</p>
+    </div>
+
+    <div class="function">
+        <h3>movenetw</h3>
+        <p>Calcula una red de rutas de menor costo que conecta múltiples puntos.</p>
+    </div>
+
+    <div class="function">
+        <h3>moverank</h3>
+        <p>Clasifica los puntos de destino según su costo de caminata desde un punto de origen.</p>
+    </div>
+
+    <h2>Funciones de Costo</h2>
+    <table>
+        <tr><th>Código</th><th>Nombre</th><th>Tipo</th></tr>
+        <tr><td>t</td><td>Función de Tobler (en sendero)</td><td>Tiempo de caminata</td></tr>
+        <tr><td>tofp</td><td>Función de Tobler (fuera de sendero)</td><td>Tiempo de caminata</td></tr>
+        <tr><td>mp</td><td>Tobler modificado de Marquez-Perez et al.</td><td>Tiempo de caminata</td></tr>
+        <tr><td>icmonp</td><td>Irmischer-Clarke (hombre, en sendero)</td><td>Tiempo de caminata</td></tr>
+        <tr><td>icmoffp</td><td>Irmischer-Clarke (hombre, fuera de sendero)</td><td>Tiempo de caminata</td></tr>
+        <tr><td>icfonp</td><td>Irmischer-Clarke (mujer, en sendero)</td><td>Tiempo de caminata</td></tr>
+        <tr><td>icfoffp</td><td>Irmischer-Clarke (mujer, fuera de sendero)</td><td>Tiempo de caminata</td></tr>
+        <tr><td>ug</td><td>Uriarte González</td><td>Tiempo de caminata</td></tr>
+        <tr><td>ma</td><td>Marín Arroyo</td><td>Tiempo de caminata</td></tr>
+        <tr><td>alb</td><td>Alberti (forrajeo pastoral)</td><td>Tiempo de caminata</td></tr>
+        <tr><td>gkrs</td><td>Garmy, Kaddouri, Rozenblat, Schneider</td><td>Tiempo de caminata</td></tr>
+        <tr><td>r</td><td>Rees</td><td>Tiempo de caminata</td></tr>
+        <tr><td>ks</td><td>Kondo-Seino</td><td>Tiempo de caminata</td></tr>
+        <tr><td>trp</td><td>Tripcevich</td><td>Tiempo de caminata</td></tr>
+        <tr><td>wcs</td><td>Pendiente crítica para vehículos con ruedas</td><td>Vehículos con ruedas</td></tr>
+        <tr><td>ree</td><td>Gasto energético relativo</td><td>Costo abstracto</td></tr>
+        <tr><td>b</td><td>Bellavia</td><td>Costo abstracto</td></tr>
+        <tr><td>e</td><td>Eastman</td><td>Costo abstracto</td></tr>
+        <tr><td>p</td><td>Pandolf et al.</td><td>Energía metabólica</td></tr>
+        <tr><td>pcf</td><td>Pandolf con factor de corrección</td><td>Energía metabólica</td></tr>
+        <tr><td>m</td><td>Minetti et al.</td><td>Energía metabólica</td></tr>
+        <tr><td>hrz</td><td>Herzog</td><td>Energía metabólica</td></tr>
+        <tr><td>vl</td><td>Van Leusen</td><td>Energía metabólica</td></tr>
+        <tr><td>ls</td><td>Llobera-Sluckin</td><td>Energía metabólica</td></tr>
+        <tr><td>a</td><td>Ardigo et al.</td><td>Energía metabólica</td></tr>
+        <tr><td>h</td><td>Hare</td><td>Energía metabólica</td></tr>
+    </table>
+
+    <h2>Parámetros Comunes</h2>
+    <div class="param">
+        <p><span class="param-name">DTM/Area_of_interest</span>: Ráster del Modelo Digital del Terreno o polígono para descargar el MDT desde fuentes en línea.</p>
+        <p><span class="param-name">Origin</span>: Punto(s) de ubicación desde los cuales se calculan los costos.</p>
+        <p><span class="param-name">Destination</span>: Punto(s) de ubicación hacia los cuales se calculan las rutas de menor costo.</p>
+        <p><span class="param-name">Move</span>: Conectividad de celdas (4, 8 o 16 direcciones).</p>
+        <p><span class="param-name">Function</span>: Función de costo a utilizar (ver tabla arriba).</p>
+        <p><span class="param-name">Time</span>: Unidad de tiempo ('h' para horas, 'm' para minutos).</p>
+        <p><span class="param-name">Cognitive_Slope</span>: Usar la pendiente perceptiva en lugar de la real.</p>
+        <p><span class="param-name">Walker_Body_Weight</span>: Peso del caminante en kg (predeterminado: 70).</p>
+        <p><span class="param-name">Carried_Load_Weight</span>: Peso de la carga en kg (predeterminado: 0).</p>
+    </div>
+
+    <h2>Créditos</h2>
+    <p><strong>Plugin:</strong> Enzo Cocca (adArte srl)</p>
+    <p><strong>Paquete R:</strong> Gianmarco Alberti</p>
+    <p><strong>Repositorio:</strong> <a href="https://github.com/enzococca/movecostTOqgis">github.com/enzococca/movecostTOqgis</a></p>
+</body>
+</html>

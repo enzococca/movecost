@@ -1,0 +1,16 @@
+{
+    "movecost": "Calculate accumulated anisotropic slope-dependent cost of movement and least-cost paths from a point origin",
+    "movecost_polygon": "Calculate accumulated cost surface using a polygon area to define the DTM extent",
+    "movebound": "Calculate slope-dependent walking cost boundaries around point locations",
+    "movebound_polygon": "Calculate walking cost boundaries using a polygon area to define the DTM extent",
+    "movecorr": "Calculate least-cost corridor between point locations",
+    "movecorr_polygon": "Calculate least-cost corridor using a polygon area to define the DTM extent",
+    "movealloc": "Calculate slope-dependent walking-cost allocation to origins",
+    "movealloc_polygon": "Calculate walking-cost allocation using a polygon area to define the DTM extent",
+    "movecomp": "Compare least-cost paths generated using different cost functions",
+    "movecomp_polygon": "Compare least-cost paths using a polygon area to define the DTM extent",
+    "movenetw": "Calculate least-cost path network between multiple points",
+    "movenetw_polygon": "Calculate least-cost path network using a polygon area to define the DTM extent",
+    "moverank": "Rank destinations by walking cost from an origin",
+    "moverank_polygon": "Rank destinations using a polygon area to define the DTM extent"
+}

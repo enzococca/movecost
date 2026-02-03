@@ -1,0 +1,16 @@
+{
+    "movecost": "Calculer la surface de coût accumulée anisotropique dépendante de la pente et les chemins de moindre coût à partir d'un point d'origine",
+    "movecost_polygon": "Calculer la surface de coût accumulée en utilisant une zone polygonale pour définir l'étendue du MNT",
+    "movebound": "Calculer les limites de coût de marche dépendantes de la pente autour des points de localisation",
+    "movebound_polygon": "Calculer les limites de coût de marche en utilisant une zone polygonale pour définir l'étendue du MNT",
+    "movecorr": "Calculer le corridor de moindre coût entre les points de localisation",
+    "movecorr_polygon": "Calculer le corridor de moindre coût en utilisant une zone polygonale pour définir l'étendue du MNT",
+    "movealloc": "Calculer l'allocation du coût de marche dépendant de la pente aux origines",
+    "movealloc_polygon": "Calculer l'allocation du coût de marche en utilisant une zone polygonale pour définir l'étendue du MNT",
+    "movecomp": "Comparer les chemins de moindre coût générés avec différentes fonctions de coût",
+    "movecomp_polygon": "Comparer les chemins de moindre coût en utilisant une zone polygonale pour définir l'étendue du MNT",
+    "movenetw": "Calculer le réseau de chemins de moindre coût entre plusieurs points",
+    "movenetw_polygon": "Calculer le réseau de chemins de moindre coût en utilisant une zone polygonale pour définir l'étendue du MNT",
+    "moverank": "Classer les destinations par coût de marche depuis une origine",
+    "moverank_polygon": "Classer les destinations en utilisant une zone polygonale pour définir l'étendue du MNT"
+}

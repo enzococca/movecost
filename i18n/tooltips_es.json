@@ -1,0 +1,16 @@
+{
+    "movecost": "Calcular la superficie de costo acumulado anisotrópico dependiente de la pendiente y las rutas de menor costo desde un punto de origen",
+    "movecost_polygon": "Calcular la superficie de costo acumulado usando un área poligonal para definir la extensión del MDT",
+    "movebound": "Calcular los límites de costo de caminata dependientes de la pendiente alrededor de ubicaciones puntuales",
+    "movebound_polygon": "Calcular los límites de costo de caminata usando un área poligonal para definir la extensión del MDT",
+    "movecorr": "Calcular el corredor de menor costo entre ubicaciones puntuales",
+    "movecorr_polygon": "Calcular el corredor de menor costo usando un área poligonal para definir la extensión del MDT",
+    "movealloc": "Calcular la asignación del costo de caminata dependiente de la pendiente a los orígenes",
+    "movealloc_polygon": "Calcular la asignación del costo de caminata usando un área poligonal para definir la extensión del MDT",
+    "movecomp": "Comparar las rutas de menor costo generadas usando diferentes funciones de costo",
+    "movecomp_polygon": "Comparar las rutas de menor costo usando un área poligonal para definir la extensión del MDT",
+    "movenetw": "Calcular la red de rutas de menor costo entre múltiples puntos",
+    "movenetw_polygon": "Calcular la red de rutas de menor costo usando un área poligonal para definir la extensión del MDT",
+    "moverank": "Clasificar los destinos por costo de caminata desde un origen",
+    "moverank_polygon": "Clasificar los destinos usando un área poligonal para definir la extensión del MDT"
+}

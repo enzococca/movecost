@@ -24,18 +24,39 @@
 
 import os
 import shutil
+import json
+import webbrowser
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
-from qgis.PyQt.QtWidgets import QApplication, QDialog, QMessageBox, QFileDialog,QLineEdit,QWidget,QCheckBox
+from qgis.PyQt.QtWidgets import QApplication, QDialog, QMessageBox, QFileDialog, QLineEdit, QWidget, QCheckBox
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtCore import *
 
-
 from qgis.core import *
-from distutils.dir_util import copy_tree
 from processing.tools.system import mkdir, userFolder
 import processing
+
+# Language codes mapping
+LANGUAGE_CODES = {
+    0: 'en',  # English
+    1: 'it',  # Italiano
+    2: 'fr',  # Français
+    3: 'es',  # Español
+    4: 'de'   # Deutsch
+}
+
+# Qt version compatibility helper
+def get_standard_button(button_name):
+    """Get QMessageBox standard button compatible with Qt5 and Qt6."""
+    try:
+        # Qt6 style
+        from qgis.PyQt.QtWidgets import QMessageBox
+        return getattr(QMessageBox.StandardButton, button_name)
+    except AttributeError:
+        # Qt5 style
+        from qgis.PyQt.QtWidgets import QMessageBox
+        return getattr(QMessageBox, button_name)
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'movecost_dialog_base.ui'))
@@ -55,11 +76,11 @@ class MOVECOSTDialog(QtWidgets.QDialog, FORM_CLASS):
         self.test()
     def test(self):
         profile_home = QgsApplication.qgisSettingsDirPath()
-        path= os.path.exists(os.path.join(profile_home,'python', 'plugins','processing_r'))
-        if path==False:
+        path = os.path.exists(os.path.join(profile_home, 'python', 'plugins', 'processing_r'))
+        if path == False:
             QMessageBox.warning(self, "Warning",
-                                     "You need to install and set R provider before",
-                                     QMessageBox.Ok)
+                                "You need to install and set R provider before",
+                                get_standard_button('Ok'))
     def on_pushButton_movecost_pressed(self):#####modifiche apportate per il calcolo statistico con R
         processing.execAlgorithmDialog('r:movecost')
         
@@ -121,9 +142,79 @@ class MOVECOSTDialog(QtWidgets.QDialog, FORM_CLASS):
             source_file = os.path.join(source_profile, filename)
             dest_file = os.path.join(rs, filename)
 
-            # Copy and overwrite the file
-            shutil.copy2(source_file, dest_file)
+            # Only copy files, not directories
+            if os.path.isfile(source_file):
+                shutil.copy2(source_file, dest_file)
 
-        # Alternatively, using copy_tree from distutils.dir_util
-        # This will also overwrite files
-        copy_tree(source_profile, rs)
+        QMessageBox.information(self, "Success",
+                                "R scripts have been copied successfully!",
+                                get_standard_button('Ok'))
+
+    def on_pushButton_help_pressed(self):
+        """Open the help documentation in the default browser."""
+        lang_code = LANGUAGE_CODES.get(self.comboBox_language.currentIndex(), 'en')
+        help_dir = os.path.join(os.path.dirname(__file__), 'help', lang_code)
+        help_file = os.path.join(help_dir, 'index.html')
+
+        # Fallback to English if the translated help doesn't exist
+        if not os.path.exists(help_file):
+            help_file = os.path.join(os.path.dirname(__file__), 'help', 'en', 'index.html')
+
+        if os.path.exists(help_file):
+            webbrowser.open('file://' + help_file)
+        else:
+            # Open GitHub wiki as fallback
+            webbrowser.open('https://github.com/enzococca/movecostTOqgis/wiki')
+
+    def on_comboBox_language_currentIndexChanged(self, index):
+        """Update tooltips when language changes."""
+        lang_code = LANGUAGE_CODES.get(index, 'en')
+        self.update_tooltips(lang_code)
+
+    def update_tooltips(self, lang_code):
+        """Update all button tooltips based on selected language."""
+        tooltips = self.get_tooltips(lang_code)
+
+        self.pushButton_movecost.setToolTip(tooltips.get('movecost', ''))
+        self.pushButton_movecost_p.setToolTip(tooltips.get('movecost_polygon', ''))
+        self.pushButton_movebound.setToolTip(tooltips.get('movebound', ''))
+        self.pushButton_movebound_p.setToolTip(tooltips.get('movebound_polygon', ''))
+        self.pushButton_movecorr.setToolTip(tooltips.get('movecorr', ''))
+        self.pushButton_movecorr_p.setToolTip(tooltips.get('movecorr_polygon', ''))
+        self.pushButton_movealloc.setToolTip(tooltips.get('movealloc', ''))
+        self.pushButton_movealloc_p.setToolTip(tooltips.get('movealloc_polygon', ''))
+        self.pushButton_movecomp.setToolTip(tooltips.get('movecomp', ''))
+        self.pushButton_movecomp_p.setToolTip(tooltips.get('movecomp_polygon', ''))
+        self.pushButton_movenetw.setToolTip(tooltips.get('movenetw', ''))
+        self.pushButton_movenetw_p.setToolTip(tooltips.get('movenetw_polygon', ''))
+        self.pushButton_moverank_p.setToolTip(tooltips.get('moverank', ''))
+        self.pushButton_moverank_polygon.setToolTip(tooltips.get('moverank_polygon', ''))
+
+    def get_tooltips(self, lang_code):
+        """Get tooltips dictionary for the specified language."""
+        tooltips_file = os.path.join(os.path.dirname(__file__), 'i18n', f'tooltips_{lang_code}.json')
+
+        if os.path.exists(tooltips_file):
+            try:
+                with open(tooltips_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
+
+        # Return default English tooltips
+        return {
+            'movecost': 'Calculate accumulated anisotropic slope-dependent cost of movement and least-cost paths from a point origin',
+            'movecost_polygon': 'Calculate accumulated cost surface using a polygon area to define the DTM extent',
+            'movebound': 'Calculate slope-dependent walking cost boundaries around point locations',
+            'movebound_polygon': 'Calculate walking cost boundaries using a polygon area to define the DTM extent',
+            'movecorr': 'Calculate least-cost corridor between point locations',
+            'movecorr_polygon': 'Calculate least-cost corridor using a polygon area to define the DTM extent',
+            'movealloc': 'Calculate slope-dependent walking-cost allocation to origins',
+            'movealloc_polygon': 'Calculate walking-cost allocation using a polygon area to define the DTM extent',
+            'movecomp': 'Compare least-cost paths generated using different cost functions',
+            'movecomp_polygon': 'Compare least-cost paths using a polygon area to define the DTM extent',
+            'movenetw': 'Calculate least-cost path network between multiple points',
+            'movenetw_polygon': 'Calculate least-cost path network using a polygon area to define the DTM extent',
+            'moverank': 'Rank destinations by walking cost from an origin',
+            'moverank_polygon': 'Rank destinations using a polygon area to define the DTM extent'
+        }
