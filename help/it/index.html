@@ -3,117 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plugin Movecost per QGIS - Guida</title>
+    <title>Movecost QGIS Plugin - Guida Completa</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
-        h1 { color: #2c5aa0; border-bottom: 2px solid #2c5aa0; padding-bottom: 10px; }
-        h2 { color: #3d7eaa; margin-top: 30px; }
-        h3 { color: #555; }
-        .function { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
-        .param { margin-left: 20px; }
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2c5aa0; border-bottom: 3px solid #2c5aa0; padding-bottom: 10px; }
+        h2 { color: #3d7eaa; margin-top: 40px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        h3 { color: #555; margin-top: 25px; }
+        h4 { color: #666; margin-top: 15px; }
+        .function-card { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2c5aa0; }
+        .tutorial { background: #e8f4e8; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #28a745; }
+        .warning { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107; }
+        .tip { background: #d1ecf1; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #17a2b8; }
+        .param { margin-left: 20px; margin-bottom: 10px; }
         .param-name { font-weight: bold; color: #2c5aa0; }
-        code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; }
+        code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
         table { border-collapse: collapse; width: 100%; margin: 15px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: #2c5aa0; color: white; }
         tr:nth-child(even) { background: #f9f9f9; }
+        .step { background: #fff; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .step-number { background: #2c5aa0; color: white; padding: 5px 12px; border-radius: 50%; font-weight: bold; margin-right: 10px; }
+        ul.checklist { list-style: none; padding-left: 0; }
+        ul.checklist li:before { content: "✓ "; color: #28a745; font-weight: bold; }
+        .toc { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .toc ul { columns: 2; }
+        .toc a { text-decoration: none; color: #2c5aa0; }
+        .toc a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <h1>Plugin Movecost per QGIS</h1>
-    <p>Strumento basato su R per il calcolo delle superfici di costo accumulate dipendenti dalla pendenza, percorsi a costo minimo e corridoi a costo minimo relativi al movimento umano nel paesaggio.</p>
+    <h1>Movecost QGIS Plugin - Guida Completa</h1>
+    <p>Versione 2.1 - Strumento basato su R per il calcolo di superfici di costo accumulate dipendenti dalla pendenza, percorsi a costo minimo e corridoi relativi al movimento umano sul territorio.</p>
 
-    <h2>Requisiti</h2>
-    <ul>
-        <li>QGIS 3.0 o superiore (compatibile con QGIS 4)</li>
+    <div class="toc">
+        <h3>Indice</h3>
+        <ul>
+            <li><a href="#requirements">Requisiti e Configurazione</a></li>
+            <li><a href="#movecost">movecost - Superficie di Costo</a></li>
+            <li><a href="#movebound">movebound - Limiti di Costo</a></li>
+            <li><a href="#movecorr">movecorr - Corridoi</a></li>
+            <li><a href="#movealloc">movealloc - Allocazione</a></li>
+            <li><a href="#movecomp">movecomp - Confronto</a></li>
+            <li><a href="#movenetw">movenetw - Reti</a></li>
+            <li><a href="#moverank">moverank - Classificazione</a></li>
+            <li><a href="#functions">Funzioni di Costo</a></li>
+            <li><a href="#parameters">Parametri</a></li>
+        </ul>
+    </div>
+
+    <h2 id="requirements">Requisiti e Configurazione</h2>
+
+    <div class="warning">
+        <strong>Importante:</strong> Prima di utilizzare questo plugin, assicurati di aver installato e configurato il Processing R Provider.
+    </div>
+
+    <h3>Requisiti di Sistema</h3>
+    <ul class="checklist">
+        <li>QGIS 3.0 o superiore (compatibile con QGIS 4 e Qt6)</li>
         <li>Plugin Processing R Provider</li>
-        <li>R con i pacchetti: <code>movecost</code>, <code>sf</code>, <code>terra</code>, <code>raster</code></li>
+        <li>R (versione 4.0 o superiore)</li>
+        <li>Pacchetti R: <code>movecost</code> (>= 2.1), <code>sf</code>, <code>terra</code>, <code>raster</code>, <code>sp</code></li>
     </ul>
 
-    <h2>Funzioni Disponibili</h2>
-
-    <div class="function">
-        <h3>movecost</h3>
-        <p>Calcola il costo accumulato anisotropico dipendente dalla pendenza del movimento nel terreno e i percorsi a costo minimo da un punto di origine verso una o più destinazioni.</p>
+    <h3>Configurazione Iniziale</h3>
+    <div class="step">
+        <span class="step-number">1</span> Installa R da <a href="https://cran.r-project.org/">cran.r-project.org</a>
+    </div>
+    <div class="step">
+        <span class="step-number">2</span> In QGIS: <strong>Plugin > Gestisci e Installa Plugin</strong> - installa "Processing R Provider"
+    </div>
+    <div class="step">
+        <span class="step-number">3</span> <strong>Impostazioni > Opzioni > Processing > Provider > R</strong> - imposta il percorso di R
+    </div>
+    <div class="step">
+        <span class="step-number">4</span> Nel plugin movecost, clicca <strong>"Aggiungi Script R"</strong>
+    </div>
+    <div class="step">
+        <span class="step-number">5</span> Il plugin aggiornerà automaticamente il pacchetto movecost se necessario
     </div>
 
-    <div class="function">
-        <h3>movebound</h3>
-        <p>Calcola i confini di costo di camminata (isolinee) dipendenti dalla pendenza attorno a uno o più punti.</p>
+    <h2 id="movecost">movecost - Superficie di Costo Accumulato</h2>
+
+    <div class="function-card">
+        <h3>Descrizione</h3>
+        <p>Calcola la superficie di costo accumulato anisotropica da un punto di origine, considerando la pendenza. Calcola anche percorsi a costo minimo e isolinee di costo (isocrone).</p>
+        <h4>Casi d'Uso</h4>
+        <ul>
+            <li>Percorsi ottimali tra siti archeologici</li>
+            <li>Tempo di percorrenza o dispendio energetico</li>
+            <li>Mappe isocrone (aree raggiungibili in un dato tempo)</li>
+            <li>Modellazione di pattern di movimento storici</li>
+        </ul>
     </div>
 
-    <div class="function">
-        <h3>movecorr</h3>
-        <p>Calcola il corridoio a costo minimo tra due punti.</p>
+    <div class="tutorial">
+        <h3>Tutorial: Calcolare il Tempo di Cammino tra Due Siti</h3>
+        <div class="step"><span class="step-number">1</span> <strong>Prepara i dati:</strong> DTM raster, layer punti origine, layer punti destinazione</div>
+        <div class="step"><span class="step-number">2</span> <strong>Clicca "movecost"</strong></div>
+        <div class="step"><span class="step-number">3</span> <strong>Imposta:</strong> CRS, DTM, Origine, Destinazione, Funzione='t', Tempo='h'</div>
+        <div class="step"><span class="step-number">4</span> <strong>Esegui</strong> - otterrai: Superficie di costo, Isolinee, Percorsi LCP</div>
     </div>
 
-    <div class="function">
-        <h3>movealloc</h3>
-        <p>Calcola l'allocazione di costo dipendente dalla pendenza da punti di origine multipli, assegnando ogni cella alla sua origine più vicina per costo di camminata.</p>
+    <h2 id="movebound">movebound - Limiti di Costo di Cammino</h2>
+
+    <div class="function-card">
+        <h3>Descrizione</h3>
+        <p>Crea poligoni di confine del costo di cammino attorno a posizioni puntuali (es. "area raggiungibile in 1 ora").</p>
+        <h4>Casi d'Uso</h4>
+        <ul>
+            <li>Aree di bacino attorno agli insediamenti</li>
+            <li>Raggi di foraggiamento</li>
+            <li>Confini territoriali basati sul tempo di cammino</li>
+        </ul>
     </div>
 
-    <div class="function">
-        <h3>movecomp</h3>
-        <p>Confronta i percorsi a costo minimo generati usando diverse funzioni di costo per analizzare come diversi modelli di movimento influenzano la selezione del percorso.</p>
+    <h2 id="movecorr">movecorr - Corridoi a Costo Minimo</h2>
+
+    <div class="function-card">
+        <h3>Descrizione</h3>
+        <p>Calcola il corridoio a costo minimo tra due punti - non solo il percorso ottimale, ma una zona di percorsi similmente a basso costo.</p>
+        <h4>Casi d'Uso</h4>
+        <ul>
+            <li>Corridoi di trasporto naturali</li>
+            <li>Zone di sviluppo di strade antiche</li>
+            <li>Pianificazione sentieri</li>
+        </ul>
     </div>
 
-    <div class="function">
-        <h3>movenetw</h3>
-        <p>Calcola una rete di percorsi a costo minimo che collega punti multipli.</p>
+    <div class="tip">
+        <strong>Suggerimento:</strong> Un corridoio stretto indica vincoli del terreno. Corridoi ampi suggeriscono percorsi alternativi multipli.
     </div>
 
-    <div class="function">
-        <h3>moverank</h3>
-        <p>Classifica i punti di destinazione in base al loro costo di camminata da un punto di origine.</p>
+    <h2 id="movealloc">movealloc - Allocazione dei Costi</h2>
+
+    <div class="function-card">
+        <h3>Descrizione</h3>
+        <p>Date più origini, ogni cella viene assegnata all'origine più vicina in base al costo di cammino (poligoni di Voronoi basati sul costo).</p>
+        <h4>Casi d'Uso</h4>
+        <ul>
+            <li>Aree di servizio per strutture multiple</li>
+            <li>Divisioni territoriali tra insediamenti</li>
+            <li>Aree di bacino delle risorse</li>
+        </ul>
     </div>
 
-    <h2>Funzioni di Costo</h2>
+    <h2 id="movecomp">movecomp - Confronto Funzioni di Costo</h2>
+
+    <div class="function-card">
+        <h3>Descrizione</h3>
+        <p>Calcola percorsi usando diverse funzioni di costo e li visualizza insieme per il confronto.</p>
+        <h4>Casi d'Uso</h4>
+        <ul>
+            <li>Confronto percorsi pedonali vs. trasporto su ruote</li>
+            <li>Test sensibilità alla funzione di costo</li>
+        </ul>
+    </div>
+
+    <h2 id="movenetw">movenetw - Reti di Percorsi</h2>
+
+    <div class="function-card">
+        <h3>Descrizione</h3>
+        <p>Crea una rete di percorsi a costo minimo tra più posizioni. Modalità "all-pairs" (tutti collegati a tutti) o "nearest neighbor" (solo vicini più prossimi).</p>
+        <h4>Casi d'Uso</h4>
+        <ul>
+            <li>Reti stradali o commerciali antiche</li>
+            <li>Connettività degli insediamenti</li>
+            <li>Mappe di densità LCP per identificare corridoi principali</li>
+        </ul>
+    </div>
+
+    <h2 id="moverank">moverank - Classificazione Destinazioni</h2>
+
+    <div class="function-card">
+        <h3>Descrizione</h3>
+        <p>Calcola il percorso a costo minimo E percorsi alternativi sub-ottimali (2°, 3°, 4° miglior percorso).</p>
+        <h4>Casi d'Uso</h4>
+        <ul>
+            <li>Percorsi alternativi quando il primario è bloccato</li>
+            <li>Ridondanza dei percorsi</li>
+            <li>Classificare destinazioni per accessibilità</li>
+        </ul>
+    </div>
+
+    <h2 id="functions">Funzioni di Costo</h2>
+
+    <h3>Tempo di Cammino</h3>
     <table>
-        <tr><th>Codice</th><th>Nome</th><th>Tipo</th></tr>
-        <tr><td>t</td><td>Funzione di Tobler (su sentiero)</td><td>Tempo di camminata</td></tr>
-        <tr><td>tofp</td><td>Funzione di Tobler (fuori sentiero)</td><td>Tempo di camminata</td></tr>
-        <tr><td>mp</td><td>Tobler modificato di Marquez-Perez et al.</td><td>Tempo di camminata</td></tr>
-        <tr><td>icmonp</td><td>Irmischer-Clarke (maschio, su sentiero)</td><td>Tempo di camminata</td></tr>
-        <tr><td>icmoffp</td><td>Irmischer-Clarke (maschio, fuori sentiero)</td><td>Tempo di camminata</td></tr>
-        <tr><td>icfonp</td><td>Irmischer-Clarke (femmina, su sentiero)</td><td>Tempo di camminata</td></tr>
-        <tr><td>icfoffp</td><td>Irmischer-Clarke (femmina, fuori sentiero)</td><td>Tempo di camminata</td></tr>
-        <tr><td>ug</td><td>Uriarte González</td><td>Tempo di camminata</td></tr>
-        <tr><td>ma</td><td>Marín Arroyo</td><td>Tempo di camminata</td></tr>
-        <tr><td>alb</td><td>Alberti (foraggiamento pastorale)</td><td>Tempo di camminata</td></tr>
-        <tr><td>gkrs</td><td>Garmy, Kaddouri, Rozenblat, Schneider</td><td>Tempo di camminata</td></tr>
-        <tr><td>r</td><td>Rees</td><td>Tempo di camminata</td></tr>
-        <tr><td>ks</td><td>Kondo-Seino</td><td>Tempo di camminata</td></tr>
-        <tr><td>trp</td><td>Tripcevich</td><td>Tempo di camminata</td></tr>
-        <tr><td>wcs</td><td>Pendenza critica per veicoli a ruote</td><td>Veicoli a ruote</td></tr>
-        <tr><td>ree</td><td>Dispendio energetico relativo</td><td>Costo astratto</td></tr>
-        <tr><td>b</td><td>Bellavia</td><td>Costo astratto</td></tr>
-        <tr><td>e</td><td>Eastman</td><td>Costo astratto</td></tr>
-        <tr><td>p</td><td>Pandolf et al.</td><td>Energia metabolica</td></tr>
-        <tr><td>pcf</td><td>Pandolf con fattore di correzione</td><td>Energia metabolica</td></tr>
-        <tr><td>m</td><td>Minetti et al.</td><td>Energia metabolica</td></tr>
-        <tr><td>hrz</td><td>Herzog</td><td>Energia metabolica</td></tr>
-        <tr><td>vl</td><td>Van Leusen</td><td>Energia metabolica</td></tr>
-        <tr><td>ls</td><td>Llobera-Sluckin</td><td>Energia metabolica</td></tr>
-        <tr><td>a</td><td>Ardigo et al.</td><td>Energia metabolica</td></tr>
-        <tr><td>h</td><td>Hare</td><td>Energia metabolica</td></tr>
+        <tr><th>Codice</th><th>Nome</th><th>Descrizione</th></tr>
+        <tr><td><code>t</code></td><td>Tobler (su sentiero)</td><td>Classica funzione di Tobler. La più usata.</td></tr>
+        <tr><td><code>tofp</code></td><td>Tobler (fuori sentiero)</td><td>Per cammino senza sentieri.</td></tr>
+        <tr><td><code>mp</code></td><td>Marquez-Perez et al.</td><td>Tobler modificata.</td></tr>
+        <tr><td><code>icmonp/icmoffp</code></td><td>Irmischer-Clarke (maschio)</td><td>Empirica da GPS.</td></tr>
+        <tr><td><code>icfonp/icfoffp</code></td><td>Irmischer-Clarke (femmina)</td><td>Empirica da GPS.</td></tr>
+        <tr><td><code>alb</code></td><td>Alberti</td><td>Per foraggiamento pastorale.</td></tr>
     </table>
 
-    <h2>Parametri Comuni</h2>
+    <h3>Veicoli a Ruote</h3>
+    <table>
+        <tr><th>Codice</th><th>Nome</th><th>Descrizione</th></tr>
+        <tr><td><code>wcs</code></td><td>Pendenza critica</td><td>Per carri/carrozze. Usa Critical_Slope.</td></tr>
+    </table>
+
+    <h3>Energia Metabolica</h3>
+    <table>
+        <tr><th>Codice</th><th>Nome</th><th>Descrizione</th></tr>
+        <tr><td><code>p/pcf</code></td><td>Pandolf</td><td>Costo metabolico con peso corporeo e carico.</td></tr>
+        <tr><td><code>m</code></td><td>Minetti</td><td>Dalla biomeccanica.</td></tr>
+        <tr><td><code>hrz/vl/ls</code></td><td>Herzog/Van Leusen/Llobera</td><td>Modelli energetici archeologici.</td></tr>
+    </table>
+
+    <h2 id="parameters">Parametri</h2>
+
+    <h3>Input</h3>
     <div class="param">
-        <p><span class="param-name">DTM/Area_of_interest</span>: Raster del Modello Digitale del Terreno o poligono per scaricare il DTM da fonti online.</p>
-        <p><span class="param-name">Origin</span>: Posizione/i punto da cui vengono calcolati i costi.</p>
-        <p><span class="param-name">Destination</span>: Posizione/i punto verso cui vengono calcolati i percorsi a costo minimo.</p>
-        <p><span class="param-name">Move</span>: Connettività delle celle (4, 8 o 16 direzioni).</p>
-        <p><span class="param-name">Function</span>: Funzione di costo da utilizzare (vedi tabella sopra).</p>
-        <p><span class="param-name">Time</span>: Unità di tempo ('h' per ore, 'm' per minuti).</p>
-        <p><span class="param-name">Cognitive_Slope</span>: Usa la pendenza percettiva invece di quella reale.</p>
-        <p><span class="param-name">Walker_Body_Weight</span>: Peso del camminatore in kg (predefinito: 70).</p>
-        <p><span class="param-name">Carried_Load_Weight</span>: Peso del carico in kg (predefinito: 0).</p>
+        <p><span class="param-name">CRS</span>: Sistema di coordinate (deve corrispondere ai dati).</p>
+        <p><span class="param-name">DTM</span>: Modello Digitale del Terreno (elevazione in metri).</p>
+        <p><span class="param-name">Origin/Destination</span>: Layer punti di partenza/arrivo.</p>
+        <p><span class="param-name">Barrier</span>: Aree impraticabili o ad alto costo (opzionale).</p>
+    </div>
+
+    <h3>Movimento</h3>
+    <div class="param">
+        <p><span class="param-name">Move</span>: Connettività celle - 4 (torre), 8 (regina), 16 (cavallo+regina, default).</p>
+        <p><span class="param-name">Function</span>: Funzione di costo.</p>
+        <p><span class="param-name">Time</span>: 'h' ore, 'm' minuti.</p>
+    </div>
+
+    <h3>Fisici</h3>
+    <div class="param">
+        <p><span class="param-name">Walker_Body_Weight</span>: Peso camminatore kg (default: 70).</p>
+        <p><span class="param-name">Carried_Load_Weight</span>: Peso carico kg (default: 0).</p>
+        <p><span class="param-name">Critical_Slope</span>: Pendenza max % per veicoli (default: 10).</p>
+        <p><span class="param-name">Cognitive_Slope</span>: Usa pendenza percepita invece di reale.</p>
+    </div>
+
+    <h2>Risoluzione Problemi</h2>
+    <div class="warning">
+        <ul>
+            <li><strong>Errore dgCMatrix:</strong> Il plugin aggiorna automaticamente movecost R >= 2.1</li>
+            <li><strong>R non trovato:</strong> Verifica Processing > Opzioni > R</li>
+            <li><strong>Script non visibili:</strong> Clicca "Aggiungi Script R"</li>
+        </ul>
     </div>
 
     <h2>Crediti</h2>
-    <p><strong>Plugin:</strong> Enzo Cocca (adArte srl)</p>
+    <p><strong>Plugin QGIS:</strong> Enzo Cocca (adArte srl)</p>
     <p><strong>Pacchetto R:</strong> Gianmarco Alberti</p>
-    <p><strong>Repository:</strong> <a href="https://github.com/enzococca/movecostTOqgis">github.com/enzococca/movecostTOqgis</a></p>
+    <p><strong>Repository:</strong> <a href="https://github.com/enzococca/movecost">github.com/enzococca/movecost</a></p>
 </body>
 </html>

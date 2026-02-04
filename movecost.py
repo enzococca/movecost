@@ -21,14 +21,14 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 # Initialize Qt resources from file resources.py
 from .resources_rc import *
 # Import the code for the dialog
-from .movecost_dialog import MOVECOSTDialog
+from .movecost_dialog import MOVECOSTDockWidget
 import os.path
 
 
@@ -63,9 +63,8 @@ class MOVECOST:
         self.actions = []
         self.menu = self.tr(u'&movecost')
 
-        # Check if plugin was started the first time in current QGIS session
-        # Must be set in initGui() to survive plugin reloads
-        self.first_start = None
+        # Dock widget reference
+        self.dock_widget = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -167,9 +166,6 @@ class MOVECOST:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-        # will be set False in run()
-        self.first_start = True
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -179,23 +175,30 @@ class MOVECOST:
                 action)
             self.iface.removeToolBarIcon(action)
 
+        # Remove dock widget if it exists
+        if self.dock_widget is not None:
+            self.iface.removeDockWidget(self.dock_widget)
+            self.dock_widget.deleteLater()
+            self.dock_widget = None
+
 
     def run(self):
         """Run method that performs all the real work"""
 
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
-            self.dlg = MOVECOSTDialog()
-
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        # Use exec() for Qt6 compatibility (exec_() is deprecated)
-        result = self.dlg.exec()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+        # Create the dock widget only once
+        if self.dock_widget is None:
+            self.dock_widget = MOVECOSTDockWidget(self.iface.mainWindow())
+            # Add the dock widget to the right side of QGIS main window
+            # Qt5/Qt6 compatible dock area
+            try:
+                # Qt6 style
+                dock_area = Qt.DockWidgetArea.RightDockWidgetArea
+            except AttributeError:
+                # Qt5 style
+                dock_area = Qt.RightDockWidgetArea
+            self.iface.addDockWidget(dock_area, self.dock_widget)
+        else:
+            # If dock widget already exists, just show/raise it
+            if not self.dock_widget.isVisible():
+                self.dock_widget.show()
+            self.dock_widget.raise_()

@@ -3,117 +3,532 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movecost QGIS Plugin - Help</title>
+    <title>Movecost QGIS Plugin - Complete Guide</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
-        h1 { color: #2c5aa0; border-bottom: 2px solid #2c5aa0; padding-bottom: 10px; }
-        h2 { color: #3d7eaa; margin-top: 30px; }
-        h3 { color: #555; }
-        .function { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
-        .param { margin-left: 20px; }
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2c5aa0; border-bottom: 3px solid #2c5aa0; padding-bottom: 10px; }
+        h2 { color: #3d7eaa; margin-top: 40px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        h3 { color: #555; margin-top: 25px; }
+        h4 { color: #666; margin-top: 15px; }
+        .function-card { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2c5aa0; }
+        .tutorial { background: #e8f4e8; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #28a745; }
+        .warning { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107; }
+        .tip { background: #d1ecf1; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #17a2b8; }
+        .param { margin-left: 20px; margin-bottom: 10px; }
         .param-name { font-weight: bold; color: #2c5aa0; }
-        code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; }
+        code { background: #e8e8e8; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; }
         table { border-collapse: collapse; width: 100%; margin: 15px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: #2c5aa0; color: white; }
         tr:nth-child(even) { background: #f9f9f9; }
+        .step { background: #fff; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .step-number { background: #2c5aa0; color: white; padding: 5px 12px; border-radius: 50%; font-weight: bold; margin-right: 10px; }
+        ul.checklist { list-style: none; padding-left: 0; }
+        ul.checklist li:before { content: "✓ "; color: #28a745; font-weight: bold; }
+        .toc { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .toc ul { columns: 2; }
+        .toc a { text-decoration: none; color: #2c5aa0; }
+        .toc a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <h1>Movecost QGIS Plugin</h1>
-    <p>R-based tool for calculation of slope-dependent accumulated cost surface, least-cost paths, and least-cost corridors related to human movement across the landscape.</p>
+    <h1>Movecost QGIS Plugin - Complete Guide</h1>
+    <p>Version 2.1 - R-based tool for calculation of slope-dependent accumulated cost surface, least-cost paths, and least-cost corridors related to human movement across the landscape.</p>
 
-    <h2>Requirements</h2>
-    <ul>
-        <li>QGIS 3.0 or higher (compatible with QGIS 4)</li>
-        <li>Processing R Provider plugin</li>
-        <li>R with packages: <code>movecost</code>, <code>sf</code>, <code>terra</code>, <code>raster</code></li>
+    <div class="toc">
+        <h3>Table of Contents</h3>
+        <ul>
+            <li><a href="#requirements">Requirements & Setup</a></li>
+            <li><a href="#movecost">movecost - Accumulated Cost Surface</a></li>
+            <li><a href="#movebound">movebound - Walking Cost Boundaries</a></li>
+            <li><a href="#movecorr">movecorr - Least-Cost Corridors</a></li>
+            <li><a href="#movealloc">movealloc - Cost Allocation</a></li>
+            <li><a href="#movecomp">movecomp - Compare Cost Functions</a></li>
+            <li><a href="#movenetw">movenetw - Least-Cost Networks</a></li>
+            <li><a href="#moverank">moverank - Rank Destinations</a></li>
+            <li><a href="#functions">Cost Functions Reference</a></li>
+            <li><a href="#parameters">Parameters Reference</a></li>
+        </ul>
+    </div>
+
+    <h2 id="requirements">Requirements & Setup</h2>
+
+    <div class="warning">
+        <strong>Important:</strong> Before using this plugin, ensure you have installed and configured the Processing R Provider.
+    </div>
+
+    <h3>System Requirements</h3>
+    <ul class="checklist">
+        <li>QGIS 3.0 or higher (fully compatible with QGIS 4 and Qt6)</li>
+        <li>Processing R Provider plugin (install from QGIS Plugin Manager)</li>
+        <li>R software (version 4.0 or higher recommended)</li>
+        <li>R packages: <code>movecost</code> (>= 2.1), <code>sf</code>, <code>terra</code>, <code>raster</code>, <code>sp</code></li>
     </ul>
 
-    <h2>Available Functions</h2>
-
-    <div class="function">
-        <h3>movecost</h3>
-        <p>Calculates accumulated anisotropic slope-dependent cost of movement across the terrain and least-cost paths from a point origin to one or more destinations.</p>
+    <h3>First-Time Setup</h3>
+    <div class="step">
+        <span class="step-number">1</span> Install R from <a href="https://cran.r-project.org/">cran.r-project.org</a>
+    </div>
+    <div class="step">
+        <span class="step-number">2</span> In QGIS, go to <strong>Plugins > Manage and Install Plugins</strong> and install "Processing R Provider"
+    </div>
+    <div class="step">
+        <span class="step-number">3</span> Go to <strong>Settings > Options > Processing > Providers > R</strong> and set the R folder path
+    </div>
+    <div class="step">
+        <span class="step-number">4</span> In movecost plugin, click <strong>"Add R Scripts"</strong> to copy the R scripts to your QGIS profile
+    </div>
+    <div class="step">
+        <span class="step-number">5</span> The plugin will automatically check and install/update the movecost R package when needed
     </div>
 
-    <div class="function">
-        <h3>movebound</h3>
-        <p>Calculates slope-dependent walking cost boundaries (isolines) around one or more point locations.</p>
+    <!-- MOVECOST -->
+    <h2 id="movecost">movecost - Accumulated Cost Surface & Least-Cost Paths</h2>
+
+    <div class="function-card">
+        <h3>Description</h3>
+        <p>Calculates the anisotropic accumulated cost surface from a point origin, considering slope and various cost models. It also computes least-cost paths from the origin to one or more destination points, and optionally generates cost isolines (isochrones).</p>
+
+        <h4>Use Cases</h4>
+        <ul>
+            <li>Determine optimal walking routes between archaeological sites</li>
+            <li>Calculate travel time or energy expenditure across terrain</li>
+            <li>Create isochrone maps showing areas reachable within specific time/cost</li>
+            <li>Model historical movement patterns</li>
+        </ul>
     </div>
 
-    <div class="function">
-        <h3>movecorr</h3>
-        <p>Calculates the least-cost corridor between two point locations.</p>
+    <div class="tutorial">
+        <h3>Tutorial: Calculate Walking Time Between Two Sites</h3>
+
+        <div class="step">
+            <span class="step-number">1</span> <strong>Prepare your data:</strong>
+            <ul>
+                <li>DTM raster layer (or use polygon to download elevation data)</li>
+                <li>Origin point layer (starting location)</li>
+                <li>Destination point layer (target location/s)</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span> <strong>Click the "movecost" button</strong> in the plugin dialog
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span> <strong>Set parameters:</strong>
+            <ul>
+                <li><strong>CRS:</strong> Select the coordinate system matching your data</li>
+                <li><strong>DTM:</strong> Select your elevation raster</li>
+                <li><strong>Origin:</strong> Select your starting point layer</li>
+                <li><strong>Destination:</strong> Select your destination point layer</li>
+                <li><strong>Function:</strong> Choose 't' (Tobler's function) for walking time</li>
+                <li><strong>Time:</strong> Select 'h' for hours or 'm' for minutes</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span> <strong>Run the algorithm</strong> and examine outputs:
+            <ul>
+                <li><strong>Accumulated Cost Surface:</strong> Raster showing cost from origin to each cell</li>
+                <li><strong>Isolines:</strong> Contour lines at regular cost intervals</li>
+                <li><strong>LCP:</strong> Least-cost path line(s) to destination(s)</li>
+            </ul>
+        </div>
     </div>
 
-    <div class="function">
-        <h3>movealloc</h3>
-        <p>Calculates slope-dependent cost allocation from multiple origin points, assigning each cell to its nearest origin by walking cost.</p>
+    <div class="tip">
+        <strong>Tip:</strong> Use the "by Polygon" version if you don't have a DTM - the plugin will download elevation data for your study area automatically.
     </div>
 
-    <div class="function">
-        <h3>movecomp</h3>
-        <p>Compares least-cost paths generated using different cost functions to analyze how different movement models affect path selection.</p>
-    </div>
-
-    <div class="function">
-        <h3>movenetw</h3>
-        <p>Calculates a least-cost path network connecting multiple point locations.</p>
-    </div>
-
-    <div class="function">
-        <h3>moverank</h3>
-        <p>Ranks destination points by their walking cost from an origin point.</p>
-    </div>
-
-    <h2>Cost Functions</h2>
+    <h4>Outputs</h4>
     <table>
-        <tr><th>Code</th><th>Name</th><th>Type</th></tr>
-        <tr><td>t</td><td>Tobler's hiking function (on-path)</td><td>Walking time</td></tr>
-        <tr><td>tofp</td><td>Tobler's hiking function (off-path)</td><td>Walking time</td></tr>
-        <tr><td>mp</td><td>Marquez-Perez et al.'s modified Tobler</td><td>Walking time</td></tr>
-        <tr><td>icmonp</td><td>Irmischer-Clarke (male, on-path)</td><td>Walking time</td></tr>
-        <tr><td>icmoffp</td><td>Irmischer-Clarke (male, off-path)</td><td>Walking time</td></tr>
-        <tr><td>icfonp</td><td>Irmischer-Clarke (female, on-path)</td><td>Walking time</td></tr>
-        <tr><td>icfoffp</td><td>Irmischer-Clarke (female, off-path)</td><td>Walking time</td></tr>
-        <tr><td>ug</td><td>Uriarte González</td><td>Walking time</td></tr>
-        <tr><td>ma</td><td>Marín Arroyo</td><td>Walking time</td></tr>
-        <tr><td>alb</td><td>Alberti (pastoral foraging)</td><td>Walking time</td></tr>
-        <tr><td>gkrs</td><td>Garmy, Kaddouri, Rozenblat, Schneider</td><td>Walking time</td></tr>
-        <tr><td>r</td><td>Rees</td><td>Walking time</td></tr>
-        <tr><td>ks</td><td>Kondo-Seino</td><td>Walking time</td></tr>
-        <tr><td>trp</td><td>Tripcevich</td><td>Walking time</td></tr>
-        <tr><td>wcs</td><td>Wheeled-vehicle critical slope</td><td>Wheeled vehicles</td></tr>
-        <tr><td>ree</td><td>Relative energetic expenditure</td><td>Abstract cost</td></tr>
-        <tr><td>b</td><td>Bellavia</td><td>Abstract cost</td></tr>
-        <tr><td>e</td><td>Eastman</td><td>Abstract cost</td></tr>
-        <tr><td>p</td><td>Pandolf et al.</td><td>Metabolic energy</td></tr>
-        <tr><td>pcf</td><td>Pandolf with correction factor</td><td>Metabolic energy</td></tr>
-        <tr><td>m</td><td>Minetti et al.</td><td>Metabolic energy</td></tr>
-        <tr><td>hrz</td><td>Herzog</td><td>Metabolic energy</td></tr>
-        <tr><td>vl</td><td>Van Leusen</td><td>Metabolic energy</td></tr>
-        <tr><td>ls</td><td>Llobera-Sluckin</td><td>Metabolic energy</td></tr>
-        <tr><td>a</td><td>Ardigo et al.</td><td>Metabolic energy</td></tr>
-        <tr><td>h</td><td>Hare</td><td>Metabolic energy</td></tr>
+        <tr><th>Output</th><th>Type</th><th>Description</th></tr>
+        <tr><td>Output_Accumulation_Coast</td><td>Raster</td><td>Accumulated cost surface from origin</td></tr>
+        <tr><td>Output_Isoline</td><td>Vector (lines)</td><td>Cost isolines/isochrones</td></tr>
+        <tr><td>Output_LCP</td><td>Vector (lines)</td><td>Least-cost path(s) to destination(s)</td></tr>
+        <tr><td>Output_LCP_Back</td><td>Vector (lines)</td><td>Return paths to origin (if enabled)</td></tr>
+        <tr><td>Output_W_Cost</td><td>Vector (points)</td><td>Destinations with cost values</td></tr>
     </table>
 
-    <h2>Common Parameters</h2>
-    <div class="param">
-        <p><span class="param-name">DTM/Area_of_interest</span>: Digital Terrain Model raster or polygon to download DTM from online sources.</p>
-        <p><span class="param-name">Origin</span>: Point location(s) from which costs are calculated.</p>
-        <p><span class="param-name">Destination</span>: Point location(s) to which least-cost paths are calculated.</p>
-        <p><span class="param-name">Move</span>: Cell connectivity (4, 8, or 16 directions).</p>
-        <p><span class="param-name">Function</span>: Cost function to use (see table above).</p>
-        <p><span class="param-name">Time</span>: Time unit ('h' for hours, 'm' for minutes).</p>
-        <p><span class="param-name">Cognitive_Slope</span>: Use perceptual slope instead of real slope.</p>
-        <p><span class="param-name">Walker_Body_Weight</span>: Walker's weight in kg (default: 70).</p>
-        <p><span class="param-name">Carried_Load_Weight</span>: Load weight in kg (default: 0).</p>
+    <!-- MOVEBOUND -->
+    <h2 id="movebound">movebound - Walking Cost Boundaries</h2>
+
+    <div class="function-card">
+        <h3>Description</h3>
+        <p>Calculates walking cost boundary polygons around one or more point locations. Unlike movecost's isolines, movebound creates specific boundary limits corresponding to exact walking cost values (e.g., "show me the area reachable in exactly 1 hour").</p>
+
+        <h4>Use Cases</h4>
+        <ul>
+            <li>Define catchment areas around settlements</li>
+            <li>Calculate foraging ranges from base camps</li>
+            <li>Determine territorial boundaries based on walking time</li>
+            <li>Model daily activity ranges</li>
+        </ul>
     </div>
 
-    <h2>Credits</h2>
-    <p><strong>Plugin:</strong> Enzo Cocca (adArte srl)</p>
-    <p><strong>R Package:</strong> Gianmarco Alberti</p>
-    <p><strong>Repository:</strong> <a href="https://github.com/enzococca/movecostTOqgis">github.com/enzococca/movecostTOqgis</a></p>
+    <div class="tutorial">
+        <h3>Tutorial: Create 1-Hour Walking Catchment Area</h3>
+
+        <div class="step">
+            <span class="step-number">1</span> <strong>Prepare your data:</strong>
+            <ul>
+                <li>DTM raster or study area polygon</li>
+                <li>Point layer with your location(s)</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span> <strong>Click the "movebound" button</strong>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span> <strong>Set parameters:</strong>
+            <ul>
+                <li><strong>Points:</strong> Select your origin point(s)</li>
+                <li><strong>Cont_Value:</strong> Set to 1 for 1-hour boundary (if using hours)</li>
+                <li><strong>Time:</strong> Select 'h' for hours</li>
+                <li><strong>Function:</strong> Choose your cost function (e.g., 't' for Tobler)</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span> <strong>Run</strong> - The output will show the boundary polygon representing the area reachable within 1 hour of walking
+        </div>
+    </div>
+
+    <!-- MOVECORR -->
+    <h2 id="movecorr">movecorr - Least-Cost Corridors</h2>
+
+    <div class="function-card">
+        <h3>Description</h3>
+        <p>Calculates the least-cost corridor between two point locations. A corridor shows not just the single optimal path, but a zone of similarly low-cost routes between two points. This is useful for understanding where movement was most likely concentrated.</p>
+
+        <h4>Use Cases</h4>
+        <ul>
+            <li>Identify natural transportation corridors</li>
+            <li>Model ancient road development zones</li>
+            <li>Plan hiking trails or conservation corridors</li>
+            <li>Understand why certain routes became historically important</li>
+        </ul>
+    </div>
+
+    <div class="tutorial">
+        <h3>Tutorial: Find Natural Corridor Between Two Cities</h3>
+
+        <div class="step">
+            <span class="step-number">1</span> <strong>Prepare two point layers:</strong> Origin and Destination
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span> <strong>Click "movecorr"</strong>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span> <strong>Configure:</strong>
+            <ul>
+                <li><strong>Origin:</strong> Your starting point</li>
+                <li><strong>Destination:</strong> Your end point</li>
+                <li><strong>Corridor_Perc:</strong> Percentage above minimum cost to include (e.g., 10%)</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span> <strong>Interpret results:</strong>
+            <ul>
+                <li><strong>Least-Cost Corridor raster:</strong> Lower values = more optimal routes</li>
+                <li><strong>LCP line:</strong> The single optimal path</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="tip">
+        <strong>Tip:</strong> A narrow corridor indicates terrain constraints forcing movement through specific areas. Wide corridors suggest multiple viable routes.
+    </div>
+
+    <!-- MOVEALLOC -->
+    <h2 id="movealloc">movealloc - Cost Allocation Analysis</h2>
+
+    <div class="function-card">
+        <h3>Description</h3>
+        <p>Performs cost allocation analysis: given multiple origin locations, each cell in the landscape is assigned to its nearest origin based on walking cost (not Euclidean distance). This creates "cost-based Voronoi polygons".</p>
+
+        <h4>Use Cases</h4>
+        <ul>
+            <li>Define service areas for multiple facilities</li>
+            <li>Model territorial divisions between settlements</li>
+            <li>Analyze resource catchment areas</li>
+            <li>Determine which settlement would have controlled which lands</li>
+        </ul>
+    </div>
+
+    <div class="tutorial">
+        <h3>Tutorial: Determine Settlement Territories</h3>
+
+        <div class="step">
+            <span class="step-number">1</span> <strong>Create a point layer</strong> with all settlement locations
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span> <strong>Click "movealloc"</strong>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span> <strong>Set parameters:</strong>
+            <ul>
+                <li><strong>Origin:</strong> Your settlements point layer</li>
+                <li><strong>Function:</strong> Choose appropriate cost function</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span> <strong>Output interpretation:</strong> Each raster cell value indicates which origin point (by index) it is closest to in terms of walking cost
+        </div>
+    </div>
+
+    <!-- MOVECOMP -->
+    <h2 id="movecomp">movecomp - Compare Cost Functions</h2>
+
+    <div class="function-card">
+        <h3>Description</h3>
+        <p>Calculates least-cost paths using different cost functions and displays them together for comparison. This helps understand how different movement assumptions (pedestrian vs. pack animal vs. wheeled vehicle) affect optimal route selection.</p>
+
+        <h4>Use Cases</h4>
+        <ul>
+            <li>Compare pedestrian vs. wheeled transport routes</li>
+            <li>Test sensitivity of paths to cost function choice</li>
+            <li>Model how different transport technologies affect route networks</li>
+            <li>Academic comparison of cost function models</li>
+        </ul>
+    </div>
+
+    <div class="tutorial">
+        <h3>Tutorial: Compare Pedestrian vs. Cart Routes</h3>
+
+        <div class="step">
+            <span class="step-number">1</span> <strong>Click "movecomp"</strong>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span> <strong>Configure:</strong>
+            <ul>
+                <li><strong>Origin/Destination:</strong> Your two points</li>
+                <li><strong>Choice1:</strong> 't' (Tobler's pedestrian function)</li>
+                <li><strong>Choice2:</strong> 'wcs' (wheeled vehicle function)</li>
+                <li>Add more choices if needed</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span> <strong>Analyze:</strong> Paths that diverge significantly indicate where terrain impacts different transport modes differently
+        </div>
+    </div>
+
+    <!-- MOVENETW -->
+    <h2 id="movenetw">movenetw - Least-Cost Path Networks</h2>
+
+    <div class="function-card">
+        <h3>Description</h3>
+        <p>Creates a network of least-cost paths connecting multiple locations. Can create either an "all-pairs" network (connecting every point to every other point) or a "nearest neighbor" network (connecting each point only to its nearest neighbors).</p>
+
+        <h4>Use Cases</h4>
+        <ul>
+            <li>Model ancient road or trade networks</li>
+            <li>Identify probable communication routes between sites</li>
+            <li>Analyze settlement connectivity</li>
+            <li>Create LCP density maps to identify major corridors</li>
+        </ul>
+    </div>
+
+    <div class="tutorial">
+        <h3>Tutorial: Create Trade Network Between Archaeological Sites</h3>
+
+        <div class="step">
+            <span class="step-number">1</span> <strong>Create point layer</strong> with all site locations
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span> <strong>Click "movenetw"</strong>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span> <strong>Configure:</strong>
+            <ul>
+                <li><strong>Origin:</strong> Your sites layer</li>
+                <li><strong>Network_type:</strong> 'allpairs' for complete network or 'neigh' for nearest-neighbor only</li>
+                <li><strong>LCP_DENS:</strong> TRUE to generate path density raster</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span> <strong>Outputs:</strong>
+            <ul>
+                <li><strong>LCPs_netw:</strong> All individual paths</li>
+                <li><strong>LCPs_netw_merged:</strong> Merged/simplified network</li>
+                <li><strong>Density raster:</strong> Shows where paths concentrate (potential major routes)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="tip">
+        <strong>Tip:</strong> The LCP density raster can reveal "natural highways" - areas where terrain funnels movement regardless of specific origin/destination.
+    </div>
+
+    <!-- MOVERANK -->
+    <h2 id="moverank">moverank - Rank Destinations by Cost</h2>
+
+    <div class="function-card">
+        <h3>Description</h3>
+        <p>Calculates the least-cost path from an origin to a destination AND computes sub-optimal alternative paths (the 2nd, 3rd, 4th... best paths). This helps understand not just the optimal route but also viable alternatives.</p>
+
+        <h4>Use Cases</h4>
+        <ul>
+            <li>Identify alternative routes when primary route is blocked</li>
+            <li>Understand route redundancy in transportation systems</li>
+            <li>Model strategic choices in path selection</li>
+            <li>Rank multiple destinations by accessibility</li>
+        </ul>
+    </div>
+
+    <div class="tutorial">
+        <h3>Tutorial: Find Primary and Alternative Routes</h3>
+
+        <div class="step">
+            <span class="step-number">1</span> <strong>Click "moverank"</strong>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span> <strong>Configure:</strong>
+            <ul>
+                <li><strong>Origin:</strong> Starting point</li>
+                <li><strong>Destination:</strong> End point</li>
+                <li><strong>LCPN:</strong> Number of alternative paths to calculate (e.g., 5)</li>
+                <li><strong>Use_Corridor:</strong> TRUE to also calculate corridor</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span> <strong>Interpret:</strong> Paths are ranked by cost, with attributes showing the cost of each alternative
+        </div>
+    </div>
+
+    <!-- COST FUNCTIONS -->
+    <h2 id="functions">Cost Functions Reference</h2>
+
+    <h3>Walking Time Functions</h3>
+    <table>
+        <tr><th>Code</th><th>Function Name</th><th>Description</th></tr>
+        <tr><td><code>t</code></td><td>Tobler (on-path)</td><td>Classic Tobler hiking function for established paths. Most commonly used.</td></tr>
+        <tr><td><code>tofp</code></td><td>Tobler (off-path)</td><td>Modified for cross-country walking without paths. Slower than on-path.</td></tr>
+        <tr><td><code>mp</code></td><td>Marquez-Perez et al.</td><td>Modified Tobler function with different slope penalty.</td></tr>
+        <tr><td><code>icmonp</code></td><td>Irmischer-Clarke (male, on-path)</td><td>Empirically derived from GPS tracking of male hikers.</td></tr>
+        <tr><td><code>icmoffp</code></td><td>Irmischer-Clarke (male, off-path)</td><td>Male hikers walking off established trails.</td></tr>
+        <tr><td><code>icfonp</code></td><td>Irmischer-Clarke (female, on-path)</td><td>Empirically derived from GPS tracking of female hikers.</td></tr>
+        <tr><td><code>icfoffp</code></td><td>Irmischer-Clarke (female, off-path)</td><td>Female hikers walking off established trails.</td></tr>
+        <tr><td><code>ug</code></td><td>Uriarte González</td><td>Function developed for Spanish archaeological contexts.</td></tr>
+        <tr><td><code>ma</code></td><td>Marín Arroyo</td><td>Optimized for mountainous terrain analysis.</td></tr>
+        <tr><td><code>alb</code></td><td>Alberti</td><td>Modified Tobler for pastoral foraging excursions.</td></tr>
+        <tr><td><code>gkrs</code></td><td>Garmy-Kaddouri-Rozenblat-Schneider</td><td>French archaeological research function.</td></tr>
+        <tr><td><code>r</code></td><td>Rees</td><td>Alternative empirical hiking function.</td></tr>
+        <tr><td><code>ks</code></td><td>Kondo-Seino</td><td>Japanese terrain analysis function.</td></tr>
+        <tr><td><code>trp</code></td><td>Tripcevich</td><td>Function for high-altitude Andean contexts.</td></tr>
+    </table>
+
+    <h3>Wheeled Vehicle Function</h3>
+    <table>
+        <tr><th>Code</th><th>Function Name</th><th>Description</th></tr>
+        <tr><td><code>wcs</code></td><td>Wheeled-vehicle critical slope</td><td>Models slope limitations for carts/wagons. Uses Critical_Slope parameter.</td></tr>
+    </table>
+
+    <h3>Abstract Cost Functions</h3>
+    <table>
+        <tr><th>Code</th><th>Function Name</th><th>Description</th></tr>
+        <tr><td><code>ree</code></td><td>Relative energetic expenditure</td><td>Dimensionless relative cost based on slope.</td></tr>
+        <tr><td><code>b</code></td><td>Bellavia</td><td>Alternative abstract cost model.</td></tr>
+        <tr><td><code>e</code></td><td>Eastman</td><td>Eastman's cost function.</td></tr>
+    </table>
+
+    <h3>Metabolic Energy Functions</h3>
+    <table>
+        <tr><th>Code</th><th>Function Name</th><th>Description</th></tr>
+        <tr><td><code>p</code></td><td>Pandolf et al.</td><td>Metabolic cost considering body weight and load. Uses W, L parameters.</td></tr>
+        <tr><td><code>pcf</code></td><td>Pandolf (corrected)</td><td>Pandolf with correction factor for downhill movement.</td></tr>
+        <tr><td><code>m</code></td><td>Minetti et al.</td><td>Energy expenditure from biomechanics research.</td></tr>
+        <tr><td><code>hrz</code></td><td>Herzog</td><td>Herzog's metabolic model.</td></tr>
+        <tr><td><code>vl</code></td><td>Van Leusen</td><td>Archaeological energy cost model.</td></tr>
+        <tr><td><code>ls</code></td><td>Llobera-Sluckin</td><td>Theoretical physics-based energy model.</td></tr>
+        <tr><td><code>a</code></td><td>Ardigo et al.</td><td>Sports science metabolic function.</td></tr>
+        <tr><td><code>h</code></td><td>Hare</td><td>Hare's energy expenditure model.</td></tr>
+    </table>
+
+    <!-- PARAMETERS -->
+    <h2 id="parameters">Parameters Reference</h2>
+
+    <h3>Input Parameters</h3>
+    <div class="param">
+        <p><span class="param-name">CRS</span>: Coordinate Reference System for all outputs. Must match your input data.</p>
+        <p><span class="param-name">DTM</span>: Digital Terrain Model raster. Elevation values should be in meters.</p>
+        <p><span class="param-name">Area_of_interest</span>: Polygon layer defining study area. If used instead of DTM, elevation data is downloaded automatically.</p>
+        <p><span class="param-name">Origin</span>: Point layer with starting location(s).</p>
+        <p><span class="param-name">Destination</span>: Point layer with target location(s).</p>
+        <p><span class="param-name">Barrier</span>: Optional line/polygon layer representing impassable or high-cost areas.</p>
+    </div>
+
+    <h3>Movement Parameters</h3>
+    <div class="param">
+        <p><span class="param-name">Move</span>: Cell connectivity - how many directions to consider:</p>
+        <ul>
+            <li><strong>4</strong>: Rook's case (N,S,E,W only) - fastest but least accurate</li>
+            <li><strong>8</strong>: Queen's case (includes diagonals) - good balance</li>
+            <li><strong>16</strong>: Knight moves + queen (default) - most accurate paths</li>
+        </ul>
+        <p><span class="param-name">Function</span>: Cost function to use (see tables above).</p>
+        <p><span class="param-name">Time</span>: Output time unit - 'h' for hours, 'm' for minutes.</p>
+    </div>
+
+    <h3>Physical Parameters</h3>
+    <div class="param">
+        <p><span class="param-name">Walker_Body_Weight</span>: Walker's weight in kg (default: 70). Used by Pandolf and Van Leusen functions.</p>
+        <p><span class="param-name">Carried_Load_Weight</span>: Load weight in kg (default: 0). Affects metabolic cost.</p>
+        <p><span class="param-name">Speed</span>: Walking speed in m/s (default: 1.2). Base speed on flat terrain.</p>
+        <p><span class="param-name">N</span>: Terrain factor (default: 1). Higher values = more difficult terrain (mud, sand, etc.).</p>
+        <p><span class="param-name">Critical_Slope</span>: Maximum slope % for wheeled vehicles (default: 10). Typically 8-16%.</p>
+    </div>
+
+    <h3>Advanced Parameters</h3>
+    <div class="param">
+        <p><span class="param-name">Cognitive_Slope</span>: TRUE/FALSE - use perceptual slope instead of actual slope. Humans perceive slopes as steeper than they are.</p>
+        <p><span class="param-name">IrregularDTM</span>: TRUE/FALSE - set TRUE if DTM has irregular edges (coastlines, etc.).</p>
+        <p><span class="param-name">PlotBarrier</span>: TRUE/FALSE - display barrier on output plots.</p>
+        <p><span class="param-name">Field</span>: Conductance value for barrier (0 = impassable, 1 = no effect).</p>
+        <p><span class="param-name">Zoom_Level</span>: Resolution for online elevation data (0-15, default: 9). Higher = more detail but slower.</p>
+    </div>
+
+    <h2>Troubleshooting</h2>
+
+    <div class="warning">
+        <h4>Common Issues</h4>
+        <ul>
+            <li><strong>dgCMatrix error:</strong> Update the movecost R package to version 2.1 or higher. The plugin now does this automatically.</li>
+            <li><strong>R not found:</strong> Check Processing > Options > R settings and verify R installation path.</li>
+            <li><strong>Scripts not appearing:</strong> Click "Add R Scripts" button to copy scripts to QGIS.</li>
+            <li><strong>CRS mismatch:</strong> Ensure all input layers have the same CRS as the one selected in the dialog.</li>
+        </ul>
+    </div>
+
+    <h2>Credits & References</h2>
+    <p><strong>QGIS Plugin:</strong> Enzo Cocca (adArte srl) - <a href="mailto:enzo.ccc@gmail.com">enzo.ccc@gmail.com</a></p>
+    <p><strong>R Package (movecost):</strong> Gianmarco Alberti</p>
+    <p><strong>Repository:</strong> <a href="https://github.com/enzococca/movecost">github.com/enzococca/movecost</a></p>
+    <p><strong>R Package Documentation:</strong> <a href="https://cran.r-project.org/package=movecost">CRAN movecost page</a></p>
+
+    <h3>Key References</h3>
+    <ul>
+        <li>Tobler W. (1993). Three presentations on geographical analysis and modeling.</li>
+        <li>Alberti G. (2019). movecost: An R package for calculating accumulated slope-dependent cost.</li>
+        <li>Herzog I. (2014). Least-cost paths – some methodological issues.</li>
+        <li>Pandolf et al. (1977). Predicting energy expenditure with loads while standing or walking.</li>
+    </ul>
+
 </body>
 </html>

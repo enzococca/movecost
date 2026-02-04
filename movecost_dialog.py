@@ -26,23 +26,35 @@ import os
 import shutil
 import json
 import webbrowser
+import glob
+import csv
+from datetime import datetime
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
-from qgis.PyQt.QtWidgets import QApplication, QDialog, QMessageBox, QFileDialog, QLineEdit, QWidget, QCheckBox
-from qgis.PyQt.QtGui import *
-from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtWidgets import (QApplication, QDockWidget, QMessageBox, QFileDialog,
+                                  QLineEdit, QWidget, QCheckBox)
+from qgis.PyQt.QtGui import QIcon, QPixmap
+from qgis.PyQt.QtCore import Qt, QTimer
 
 from qgis.core import *
+from qgis.core import QgsProcessingUtils
 from processing.tools.system import mkdir, userFolder
 import processing
+
+# Import layer organizer
+try:
+    from .layer_organizer import organize_movecost_layers, MovecostLayerOrganizer
+except ImportError:
+    organize_movecost_layers = None
+    MovecostLayerOrganizer = None
 
 # Language codes mapping
 LANGUAGE_CODES = {
     0: 'en',  # English
     1: 'it',  # Italiano
-    2: 'fr',  # Français
-    3: 'es',  # Español
+    2: 'fr',  # Francais
+    3: 'es',  # Espanol
     4: 'de'   # Deutsch
 }
 
@@ -57,23 +69,103 @@ def get_standard_button(button_name):
         # Qt5 style
         from qgis.PyQt.QtWidgets import QMessageBox
         return getattr(QMessageBox, button_name)
+
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'movecost_dialog_base.ui'))
 
 
-class MOVECOSTDialog(QtWidgets.QDialog, FORM_CLASS):
+class MOVECOSTDockWidget(QDockWidget):
+    """QGIS Dock Widget for MOVECOST plugin."""
+
     def __init__(self, parent=None):
         """Constructor."""
-        super(MOVECOSTDialog, self).__init__(parent)
+        super(MOVECOSTDockWidget, self).__init__(parent)
+
+        # Set dock widget properties
+        self.setWindowTitle("movecost")
+        self.setObjectName("MOVECOSTDockWidget")
+
+        # Set icon
+        icon_path = os.path.join(os.path.dirname(__file__), 'movecost.png')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+
+        # Create the content widget
+        self.content_widget = MOVECOSTWidget(self)
+        self.setWidget(self.content_widget)
+
+        # Allow the dock to be closed, moved, and floated
+        # Qt5/Qt6 compatible feature flags
+        try:
+            # Qt6 style
+            features = (
+                QDockWidget.DockWidgetFeature.DockWidgetClosable |
+                QDockWidget.DockWidgetFeature.DockWidgetMovable |
+                QDockWidget.DockWidgetFeature.DockWidgetFloatable
+            )
+        except AttributeError:
+            # Qt5 style
+            features = (
+                QDockWidget.DockWidgetClosable |
+                QDockWidget.DockWidgetMovable |
+                QDockWidget.DockWidgetFloatable
+            )
+        self.setFeatures(features)
+
+
+class MOVECOSTWidget(QWidget, FORM_CLASS):
+    """Content widget for MOVECOST dock widget."""
+
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(MOVECOSTWidget, self).__init__(parent)
         # Set up the user interface from Designer through FORM_CLASS.
-        # After self.setupUi() you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-    
+
+        # Store last algorithm parameters for summary
+        self.last_algorithm = None
+        self.last_params = {}
+        self.last_results = {}
+        self.current_plot_path = None
+
+        # Connect algorithm buttons
+        self.pushButton_movecost.clicked.connect(self.on_pushButton_movecost_pressed)
+        self.pushButton_movecost_p.clicked.connect(self.on_pushButton_movecost_p_pressed)
+        self.pushButton_movebound.clicked.connect(self.on_pushButton_movebound_pressed)
+        self.pushButton_movebound_p.clicked.connect(self.on_pushButton_movebound_p_pressed)
+        self.pushButton_movecorr.clicked.connect(self.on_pushButton_movecorr_pressed)
+        self.pushButton_movecorr_p.clicked.connect(self.on_pushButton_movecorr_p_pressed)
+        self.pushButton_movealloc.clicked.connect(self.on_pushButton_movealloc_pressed)
+        self.pushButton_movealloc_p.clicked.connect(self.on_pushButton_movealloc_p_pressed)
+        self.pushButton_movecomp.clicked.connect(self.on_pushButton_movecomp_pressed)
+        self.pushButton_movecomp_p.clicked.connect(self.on_pushButton_movecomp_p_pressed)
+        self.pushButton_movenetw.clicked.connect(self.on_pushButton_movenetw_pressed)
+        self.pushButton_movenetw_p.clicked.connect(self.on_pushButton_movenetw_p_pressed)
+        self.pushButton_moverank_p.clicked.connect(self.on_pushButton_moverank_p_pressed)
+        self.pushButton_moverank_polygon.clicked.connect(self.on_pushButton_moverank_polygon_pressed)
+
+        # Connect settings buttons
+        self.pushButton_add_script.clicked.connect(self.on_pushButton_add_script_pressed)
+        self.pushButton_help.clicked.connect(self.on_pushButton_help_pressed)
+        self.comboBox_language.currentIndexChanged.connect(self.on_comboBox_language_currentIndexChanged)
+        self.pushButton_organize.clicked.connect(self.on_pushButton_organize_pressed)
+
+        # Connect results/export buttons
+        self.pushButton_refresh_plot.clicked.connect(self.on_pushButton_refresh_plot_pressed)
+        self.pushButton_save_plot.clicked.connect(self.on_pushButton_save_plot_pressed)
+        self.pushButton_export_csv.clicked.connect(self.on_pushButton_export_csv_pressed)
+        self.pushButton_export_pdf.clicked.connect(self.on_pushButton_export_pdf_pressed)
+        self.pushButton_export_html.clicked.connect(self.on_pushButton_export_html_pressed)
+
+        # Initialize layer organizer
+        self.layer_organizer = None
+        if MovecostLayerOrganizer is not None:
+            self.layer_organizer = MovecostLayerOrganizer(self)
+            self.layer_organizer.organization_complete.connect(self._on_organization_complete)
+
         self.test()
+
     def test(self):
         profile_home = QgsApplication.qgisSettingsDirPath()
         path = os.path.exists(os.path.join(profile_home, 'python', 'plugins', 'processing_r'))
@@ -81,47 +173,560 @@ class MOVECOSTDialog(QtWidgets.QDialog, FORM_CLASS):
             QMessageBox.warning(self, "Warning",
                                 "You need to install and set R provider before",
                                 get_standard_button('Ok'))
-    def on_pushButton_movecost_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movecost')
-        
-    def on_pushButton_movecost_p_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movecostbypolygon')
-        
-    def on_pushButton_movebound_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movebound')
-    
-    def on_pushButton_movebound_p_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:moveboundbypolygon')
-    
-    def on_pushButton_movecorr_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movecorr')
-    
-    def on_pushButton_movecorr_p_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movecorrbypolygon')
-    
-    def on_pushButton_movealloc_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movealloc')
-    
-    def on_pushButton_movealloc_p_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:moveallocbypolygon')
-    
-    def on_pushButton_movecomp_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movecomp')
-    
-    def on_pushButton_movecomp_p_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movecompbypolygon')
-    
-    def on_pushButton_movenetw_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movenetw')
-    
-    def on_pushButton_movenetw_p_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:movenetwbypolygon')
-    
-    def on_pushButton_moverank_p_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:moverank')
-    
-    def on_pushButton_moverank_polygon_pressed(self):#####modifiche apportate per il calcolo statistico con R
-        processing.execAlgorithmDialog('r:moverankbypolygon')
+
+    def _run_algorithm(self, algorithm_name, display_name):
+        """Run an algorithm and update the results tab."""
+        self._start_monitoring_if_enabled()
+        self.last_algorithm = display_name
+
+        # Run the processing algorithm dialog
+        processing.execAlgorithmDialog(algorithm_name)
+
+        # Schedule organization and results update
+        self._schedule_organization()
+        # Longer delay to ensure R processing completes and plot is saved
+        QTimer.singleShot(5000, self._update_results_tab)
+
+    def on_pushButton_movecost_pressed(self):
+        self._run_algorithm('r:movecost', 'movecost')
+
+    def on_pushButton_movecost_p_pressed(self):
+        self._run_algorithm('r:movecostbypolygon', 'movecost by polygon')
+
+    def on_pushButton_movebound_pressed(self):
+        self._run_algorithm('r:movebound', 'movebound')
+
+    def on_pushButton_movebound_p_pressed(self):
+        self._run_algorithm('r:moveboundbypolygon', 'movebound by polygon')
+
+    def on_pushButton_movecorr_pressed(self):
+        self._run_algorithm('r:movecorr', 'movecorr')
+
+    def on_pushButton_movecorr_p_pressed(self):
+        self._run_algorithm('r:movecorrbypolygon', 'movecorr by polygon')
+
+    def on_pushButton_movealloc_pressed(self):
+        self._run_algorithm('r:movealloc', 'movealloc')
+
+    def on_pushButton_movealloc_p_pressed(self):
+        self._run_algorithm('r:moveallocbypolygon', 'movealloc by polygon')
+
+    def on_pushButton_movecomp_pressed(self):
+        self._run_algorithm('r:movecomp', 'movecomp')
+
+    def on_pushButton_movecomp_p_pressed(self):
+        self._run_algorithm('r:movecompbypolygon', 'movecomp by polygon')
+
+    def on_pushButton_movenetw_pressed(self):
+        self._run_algorithm('r:movenetw', 'movenetw')
+
+    def on_pushButton_movenetw_p_pressed(self):
+        self._run_algorithm('r:movenetwbypolygon', 'movenetw by polygon')
+
+    def on_pushButton_moverank_p_pressed(self):
+        self._run_algorithm('r:moverank', 'moverank')
+
+    def on_pushButton_moverank_polygon_pressed(self):
+        self._run_algorithm('r:moverankbypolygon', 'moverank by polygon')
+
+    def _start_monitoring_if_enabled(self):
+        """Start layer monitoring if auto-organize is enabled."""
+        if self.checkBox_auto_organize.isChecked() and self.layer_organizer:
+            self.layer_organizer.start_monitoring()
+
+    def _schedule_organization(self):
+        """Schedule layer organization after the algorithm dialog closes."""
+        if self.checkBox_auto_organize.isChecked():
+            QTimer.singleShot(3000, self._delayed_organize)
+
+    def _delayed_organize(self):
+        """Organize layers after delay."""
+        if organize_movecost_layers is not None:
+            try:
+                organize_movecost_layers()
+            except Exception as e:
+                print(f"Layer organization error: {e}")
+
+    def _on_organization_complete(self):
+        """Called when organization is complete."""
+        pass
+
+    def _update_results_tab(self):
+        """Update the results tab with summary and plot."""
+        self._update_summary()
+        self._load_latest_plot()
+
+    def _update_summary(self):
+        """Generate and display cost summary."""
+        if not self.last_algorithm:
+            return
+
+        # Get recently added layers
+        layers = QgsProject.instance().mapLayers().values()
+        recent_layers = []
+        for layer in layers:
+            if layer.type() == QgsMapLayerType.VectorLayer:
+                # Check for movecost-related fields
+                field_names = [f.name().lower() for f in layer.fields()]
+                if any(f in field_names for f in ['cost', 'length_m', 'length_km', 'time_converted']):
+                    recent_layers.append(layer)
+
+        # Build summary HTML
+        summary = f"""<h3 style="color: #2c3e50;">Analysis: {self.last_algorithm}</h3>
+<p><b>Date:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+<hr>"""
+
+        if recent_layers:
+            for layer in recent_layers[:5]:  # Limit to 5 most relevant layers
+                summary += f"<h4 style='color: #3498db;'>{layer.name()}</h4>"
+                summary += "<table style='width:100%; border-collapse: collapse;'>"
+
+                # Calculate statistics for cost-related fields
+                for field in layer.fields():
+                    fname = field.name().lower()
+                    if fname in ['cost', 'length_m', 'length_km', 'area_m2', 'area_km2', 'area_ha']:
+                        try:
+                            idx = layer.fields().indexOf(field.name())
+                            values = [f[idx] for f in layer.getFeatures() if f[idx] is not None]
+                            if values:
+                                min_val = min(values)
+                                max_val = max(values)
+                                avg_val = sum(values) / len(values)
+                                summary += f"""<tr>
+                                    <td style='padding: 4px; border-bottom: 1px solid #eee;'><b>{field.name()}</b></td>
+                                    <td style='padding: 4px; border-bottom: 1px solid #eee;'>
+                                        Min: {min_val:.2f} | Max: {max_val:.2f} | Avg: {avg_val:.2f}
+                                    </td>
+                                </tr>"""
+                        except:
+                            pass
+
+                    elif fname == 'time_converted':
+                        try:
+                            idx = layer.fields().indexOf(field.name())
+                            times = [f[idx] for f in layer.getFeatures() if f[idx] is not None]
+                            if times:
+                                summary += f"""<tr>
+                                    <td style='padding: 4px; border-bottom: 1px solid #eee;'><b>Time Range</b></td>
+                                    <td style='padding: 4px; border-bottom: 1px solid #eee;'>
+                                        {times[0]} - {times[-1]}
+                                    </td>
+                                </tr>"""
+                        except:
+                            pass
+
+                summary += "</table><br>"
+        else:
+            summary += "<p><i>No cost data available yet. Run an algorithm to see results.</i></p>"
+
+        self.textEdit_summary.setHtml(summary)
+
+    def _load_latest_plot(self):
+        """Load the latest R plot from the processing directory."""
+        import tempfile
+
+        # Look for R plots in various possible locations
+        profile_home = QgsApplication.qgisSettingsDirPath()
+
+        # Get the system temp directory
+        system_temp = tempfile.gettempdir()
+
+        # Get QGIS Processing temp folder
+        try:
+            processing_temp = QgsProcessingUtils.tempFolder()
+        except:
+            processing_temp = None
+
+        # First check the dedicated movecost plots directory
+        movecost_plot_dirs = [
+            os.path.join(system_temp, 'movecost_plots'),
+            os.path.join('/tmp', 'movecost_plots'),
+            os.path.join('/private/tmp', 'movecost_plots'),
+        ]
+
+        # Check for movecost_latest_plot.png in dedicated directories first
+        for plot_dir in movecost_plot_dirs:
+            plot_file = os.path.join(plot_dir, 'movecost_latest_plot.png')
+            if os.path.exists(plot_file):
+                try:
+                    file_time = os.path.getmtime(plot_file)
+                    current_time = datetime.now().timestamp()
+                    # If modified in last 10 minutes, use it directly
+                    if (current_time - file_time) < 600:
+                        self.current_plot_path = plot_file
+                        pixmap = QPixmap(plot_file)
+                        if not pixmap.isNull():
+                            scaled_pixmap = pixmap.scaled(
+                                self.label_plot.width() if self.label_plot.width() > 100 else 350,
+                                self.label_plot.height() if self.label_plot.height() > 100 else 250,
+                                Qt.KeepAspectRatio,
+                                Qt.SmoothTransformation
+                            )
+                            self.label_plot.setPixmap(scaled_pixmap)
+                            self.label_plot.setToolTip(f"Plot: movecost_latest_plot.png")
+                            return
+                except (OSError, IOError):
+                    continue
+
+        # Processing R provider typically saves plots to these locations
+        temp_dirs = [
+            # QGIS Processing temp folder (most likely location)
+            processing_temp,
+            # QGIS processing directories
+            os.path.join(profile_home, 'processing', 'outputs'),
+            os.path.join(profile_home, 'processing'),
+            # R processing specific temp locations
+            os.path.join(system_temp, 'processing'),
+            os.path.join(system_temp, 'processing_r'),
+            os.path.join(system_temp, 'qgis'),
+            # Movecost plots directories
+            os.path.join(system_temp, 'movecost_plots'),
+            # System temp (where R often saves Rplots.pdf and converted images)
+            system_temp,
+            '/tmp',
+            # User home (sometimes R saves here)
+            os.path.expanduser('~'),
+            # macOS specific temp locations
+            '/private/tmp',
+            '/private/var/folders',
+        ]
+
+        # Filter out None values
+        temp_dirs = [d for d in temp_dirs if d is not None]
+
+        # Try to get R provider output folder from settings
+        try:
+            from processing.core.ProcessingConfig import ProcessingConfig
+            r_output = ProcessingConfig.getSetting('R_FOLDER')
+            if r_output:
+                temp_dirs.insert(0, r_output)
+        except:
+            pass
+
+        # Also search for R-specific plot patterns (most specific first)
+        plot_patterns = [
+            'Rplots*.png', 'Rplots*.jpg', 'Rplots*.jpeg',  # Standard R plot naming
+            'Rplot*.png', 'Rplot*.jpg', 'Rplot*.jpeg',
+            'rplot*.png', 'rplot*.jpg', 'rplot*.jpeg',
+            'plot*.png', 'plot*.jpg', 'plot*.jpeg',
+            '*_plot.png', '*_plot.jpg', '*_plot.jpeg',
+            '*movecost*.png', '*movebound*.png', '*movecorr*.png',
+            '*movealloc*.png', '*movecomp*.png', '*movenetw*.png',
+            '*moverank*.png',
+            'processing_*.png', 'output*.png',
+            '*.png', '*.jpg', '*.jpeg'
+        ]
+
+        latest_plot = None
+        latest_time = 0
+        current_time = datetime.now().timestamp()
+
+        for temp_dir in temp_dirs:
+            if not os.path.exists(temp_dir):
+                continue
+
+            # Search directly in directory
+            for pattern in plot_patterns:
+                try:
+                    for plot_file in glob.glob(os.path.join(temp_dir, pattern)):
+                        try:
+                            file_time = os.path.getmtime(plot_file)
+                            # Only consider files modified in the last 10 minutes
+                            if file_time > latest_time and (current_time - file_time) < 600:
+                                # Skip very small files (likely not real plots)
+                                if os.path.getsize(plot_file) > 1000:
+                                    latest_time = file_time
+                                    latest_plot = plot_file
+                        except (OSError, IOError):
+                            continue
+                except Exception:
+                    continue
+
+            # Also search up to two levels deep for processing subdirectories
+            try:
+                for subdir in os.listdir(temp_dir):
+                    subdir_path = os.path.join(temp_dir, subdir)
+                    if os.path.isdir(subdir_path):
+                        # First level subdirectory
+                        for pattern in plot_patterns[:10]:  # R-specific patterns for subdirs
+                            try:
+                                for plot_file in glob.glob(os.path.join(subdir_path, pattern)):
+                                    try:
+                                        file_time = os.path.getmtime(plot_file)
+                                        if file_time > latest_time and (current_time - file_time) < 600:
+                                            if os.path.getsize(plot_file) > 1000:
+                                                latest_time = file_time
+                                                latest_plot = plot_file
+                                    except (OSError, IOError):
+                                        continue
+                            except Exception:
+                                continue
+
+                        # Second level subdirectory (for nested temp structures)
+                        try:
+                            for subsubdir in os.listdir(subdir_path):
+                                subsubdir_path = os.path.join(subdir_path, subsubdir)
+                                if os.path.isdir(subsubdir_path):
+                                    for pattern in plot_patterns[:8]:
+                                        try:
+                                            for plot_file in glob.glob(os.path.join(subsubdir_path, pattern)):
+                                                try:
+                                                    file_time = os.path.getmtime(plot_file)
+                                                    if file_time > latest_time and (current_time - file_time) < 600:
+                                                        if os.path.getsize(plot_file) > 1000:
+                                                            latest_time = file_time
+                                                            latest_plot = plot_file
+                                                except (OSError, IOError):
+                                                    continue
+                                        except Exception:
+                                            continue
+                        except (OSError, PermissionError):
+                            continue
+            except (OSError, PermissionError):
+                continue
+
+        # Also try recursive glob in processing temp (if not too slow)
+        if processing_temp and os.path.exists(processing_temp):
+            try:
+                for pattern in ['**/Rplot*.png', '**/plot*.png', '**/*_plot.png']:
+                    for plot_file in glob.glob(os.path.join(processing_temp, pattern), recursive=True):
+                        try:
+                            file_time = os.path.getmtime(plot_file)
+                            if file_time > latest_time and (current_time - file_time) < 600:
+                                if os.path.getsize(plot_file) > 1000:
+                                    latest_time = file_time
+                                    latest_plot = plot_file
+                        except (OSError, IOError):
+                            continue
+            except Exception:
+                pass
+
+        if latest_plot and latest_plot.lower().endswith(('.png', '.jpg', '.jpeg')):
+            self.current_plot_path = latest_plot
+            pixmap = QPixmap(latest_plot)
+            if not pixmap.isNull():
+                # Scale maintaining aspect ratio
+                scaled_pixmap = pixmap.scaled(
+                    self.label_plot.width() if self.label_plot.width() > 100 else 350,
+                    self.label_plot.height() if self.label_plot.height() > 100 else 250,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                self.label_plot.setPixmap(scaled_pixmap)
+                self.label_plot.setToolTip(f"Plot: {os.path.basename(latest_plot)}")
+                return
+
+        self.label_plot.setText("R plots will appear here after running an algorithm\n\nClick 'Refresh Plot' after running an algorithm")
+
+    def on_pushButton_refresh_plot_pressed(self):
+        """Refresh the plot display."""
+        # Check if Shift is held for debug mode
+        modifiers = QApplication.keyboardModifiers()
+        try:
+            shift_modifier = Qt.KeyboardModifier.ShiftModifier
+        except AttributeError:
+            shift_modifier = Qt.ShiftModifier
+
+        if modifiers == shift_modifier:
+            self._show_search_debug()
+            return
+
+        self._load_latest_plot()
+
+        # If no plot found, offer to manually select one
+        if self.current_plot_path is None or not os.path.exists(self.current_plot_path or ''):
+            reply = QMessageBox.question(
+                self, "No Plot Found",
+                "No recent R plot was found automatically.\n\nWould you like to manually select an image file?\n\n"
+                "(Tip: Hold Shift and click 'Refresh Plot' to see where we're searching)",
+                get_standard_button('Yes') | get_standard_button('No'),
+                get_standard_button('No')
+            )
+            if reply == get_standard_button('Yes'):
+                self._manual_select_plot()
+
+    def _show_search_debug(self):
+        """Show debug info about where we're searching for plots."""
+        import tempfile
+
+        profile_home = QgsApplication.qgisSettingsDirPath()
+        system_temp = tempfile.gettempdir()
+
+        try:
+            processing_temp = QgsProcessingUtils.tempFolder()
+        except:
+            processing_temp = "N/A"
+
+        debug_info = f"""Search directories for R plots:
+
+1. QGIS Profile: {profile_home}
+2. System Temp: {system_temp}
+3. Processing Temp: {processing_temp}
+
+Looking for files matching:
+- Rplots*.png, Rplot*.png
+- plot*.png, *_plot.png
+- *movecost*.png (and other algorithm names)
+- *.png, *.jpg, *.jpeg
+
+Files must be:
+- Modified within the last 10 minutes
+- Larger than 1KB
+
+Current plot path: {self.current_plot_path or 'None'}
+"""
+        QMessageBox.information(self, "Plot Search Debug Info", debug_info,
+                               get_standard_button('Ok'))
+
+    def _manual_select_plot(self):
+        """Allow user to manually select a plot file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select Plot Image", "",
+            "Image files (*.png *.jpg *.jpeg);;All files (*.*)"
+        )
+        if file_path:
+            self.current_plot_path = file_path
+            pixmap = QPixmap(file_path)
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(
+                    self.label_plot.width() if self.label_plot.width() > 100 else 350,
+                    self.label_plot.height() if self.label_plot.height() > 100 else 250,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                self.label_plot.setPixmap(scaled_pixmap)
+                self.label_plot.setToolTip(f"Plot: {os.path.basename(file_path)}")
+
+    def on_pushButton_save_plot_pressed(self):
+        """Save the current plot to a file."""
+        if self.current_plot_path and os.path.exists(self.current_plot_path):
+            save_path, _ = QFileDialog.getSaveFileName(
+                self, "Save Plot", "",
+                "PNG files (*.png);;JPEG files (*.jpg);;All files (*.*)"
+            )
+            if save_path:
+                shutil.copy2(self.current_plot_path, save_path)
+                QMessageBox.information(self, "Success", f"Plot saved to {save_path}",
+                                        get_standard_button('Ok'))
+        else:
+            QMessageBox.warning(self, "Warning", "No plot available to save.",
+                               get_standard_button('Ok'))
+
+    def on_pushButton_export_csv_pressed(self):
+        """Export cost data to CSV."""
+        layers = QgsProject.instance().mapLayers().values()
+        cost_layers = []
+        for layer in layers:
+            if layer.type() == QgsMapLayerType.VectorLayer:
+                field_names = [f.name().lower() for f in layer.fields()]
+                if any(f in field_names for f in ['cost', 'length_m', 'time_converted']):
+                    cost_layers.append(layer)
+
+        if not cost_layers:
+            QMessageBox.warning(self, "Warning", "No cost layers found to export.",
+                               get_standard_button('Ok'))
+            return
+
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, "Export Cost Table", "",
+            "CSV files (*.csv);;All files (*.*)"
+        )
+        if save_path:
+            try:
+                with open(save_path, 'w', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.writer(csvfile)
+                    for layer in cost_layers:
+                        writer.writerow([f"Layer: {layer.name()}"])
+                        headers = [f.name() for f in layer.fields()]
+                        writer.writerow(headers)
+                        for feature in layer.getFeatures():
+                            writer.writerow([feature[h] for h in headers])
+                        writer.writerow([])  # Empty row between layers
+
+                QMessageBox.information(self, "Success", f"Data exported to {save_path}",
+                                        get_standard_button('Ok'))
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Export failed: {str(e)}",
+                                    get_standard_button('Ok'))
+
+    def on_pushButton_export_pdf_pressed(self):
+        """Export report to PDF."""
+        QMessageBox.information(self, "Info",
+            "PDF export requires additional libraries. Use HTML export for now.",
+            get_standard_button('Ok'))
+
+    def on_pushButton_export_html_pressed(self):
+        """Export report to HTML."""
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, "Export Report", "",
+            "HTML files (*.html);;All files (*.*)"
+        )
+        if save_path:
+            try:
+                html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>Movecost Report</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; color: #2c3e50; }}
+        h1 {{ color: #3498db; }}
+        h2 {{ color: #2980b9; }}
+        table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
+        th, td {{ border: 1px solid #bdc3c7; padding: 8px; text-align: left; }}
+        th {{ background-color: #3498db; color: white; }}
+        tr:nth-child(even) {{ background-color: #f8f9fa; }}
+        .summary {{ background: #f8f9fa; padding: 15px; border-radius: 8px; }}
+    </style>
+</head>
+<body>
+    <h1>Movecost Analysis Report</h1>
+    <p><b>Generated:</b> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <div class="summary">
+        {self.textEdit_summary.toHtml()}
+    </div>
+"""
+                # Add layer data tables
+                layers = QgsProject.instance().mapLayers().values()
+                for layer in layers:
+                    if layer.type() == QgsMapLayerType.VectorLayer:
+                        field_names = [f.name().lower() for f in layer.fields()]
+                        if any(f in field_names for f in ['cost', 'length_m', 'time_converted']):
+                            html_content += f"<h2>{layer.name()}</h2>"
+                            html_content += "<table><tr>"
+                            for field in layer.fields():
+                                html_content += f"<th>{field.name()}</th>"
+                            html_content += "</tr>"
+                            for feature in layer.getFeatures():
+                                html_content += "<tr>"
+                                for field in layer.fields():
+                                    html_content += f"<td>{feature[field.name()]}</td>"
+                                html_content += "</tr>"
+                            html_content += "</table>"
+
+                html_content += "</body></html>"
+
+                with open(save_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+
+                QMessageBox.information(self, "Success", f"Report exported to {save_path}",
+                                        get_standard_button('Ok'))
+                webbrowser.open('file://' + save_path)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Export failed: {str(e)}",
+                                    get_standard_button('Ok'))
+
+    def on_pushButton_organize_pressed(self):
+        """Manually organize all movecost layers."""
+        if organize_movecost_layers is not None:
+            group = organize_movecost_layers()
+            QMessageBox.information(self, "Success",
+                                    "Layers have been organized and styled!",
+                                    get_standard_button('Ok'))
+        else:
+            QMessageBox.warning(self, "Warning",
+                                "Layer organizer module not available.",
+                                get_standard_button('Ok'))
+
     def defaultScriptsFolder():
         folder = str(os.path.join(userFolder(), "rscripts"))
         mkdir(folder)
@@ -164,7 +769,7 @@ class MOVECOSTDialog(QtWidgets.QDialog, FORM_CLASS):
             webbrowser.open('file://' + help_file)
         else:
             # Open GitHub wiki as fallback
-            webbrowser.open('https://github.com/enzococca/movecostTOqgis/wiki')
+            webbrowser.open('https://github.com/enzococca/movecost/wiki')
 
     def on_comboBox_language_currentIndexChanged(self, index):
         """Update tooltips when language changes."""
@@ -218,3 +823,7 @@ class MOVECOSTDialog(QtWidgets.QDialog, FORM_CLASS):
             'moverank': 'Rank destinations by walking cost from an origin',
             'moverank_polygon': 'Rank destinations using a polygon area to define the DTM extent'
         }
+
+
+# Keep the old class name as an alias for backwards compatibility
+MOVECOSTDialog = MOVECOSTDockWidget

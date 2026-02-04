@@ -1,6 +1,5 @@
-
-##Movecomp by Polygon=name
 ##movecost script=group
+##Movecomp by Polygon=name
 ##CRS=crs
 ##Area_of_interest=vector polygon
 ##Origin=vector point
@@ -9,12 +8,10 @@
 ##PlotBarrier=string FALSE
 ##IrregularDTM=string FALSE
 ##Movecomp by polygon=name
-##Move=selection 16;8;4 ;
+##Move=enum literal 16;8;4
 ##Field=number 0
-##Choice1=selection ; t;tofp;mp;icmonp;icmoffp;icfonp;icfoffp;ug;ma;alb;gkrs;r;ks;trp;wcs;ree;b;e;p;pcf;m;hrz;vl;ls;a;h ;
-##Choice2=selection ; t;tofp;mp;icmonp;icmoffp;icfonp;icfoffp;ug;ma;alb;gkrs;r;ks;trp;wcs;ree;b;e;p;pcf;m;hrz;vl;ls;a;h ;
-##Choice3=selection ; t;tofp;mp;icmonp;icmoffp;icfonp;icfoffp;ug;ma;alb;gkrs;r;ks;trp;wcs;ree;b;e;p;pcf;m;hrz;vl;ls;a;h ;
-##Time=selection h;m ;
+##Functions_to_compare=string t,mp,ug
+##Time=selection h;m
 ##Return_Base=string TRUE
 ##Cognitive_Slope=string TRUE
 ##Critical_Slope=number 10
@@ -28,16 +25,30 @@
 ##Output_LCP_Back=output vector
 ##showplots
 
+# Function to install missing packages
+install_if_missing <- function(packages) {
+    for (pkg in packages) {
+        if (!requireNamespace(pkg, quietly = TRUE)) {
+            message(paste("Installing package:", pkg))
+            install.packages(pkg, repos = "https://cloud.r-project.org/", dependencies = TRUE)
+        }
+    }
+}
+
+# All dependencies required by movecost (including indirect dependencies)
+all_dependencies <- c("chron", "terra", "gdistance", "Matrix", "igraph", "sp", "sf", "raster", "progress", "dplyr")
+install_if_missing(all_dependencies)
+
 # Function to check and update movecost package
 check_movecost_version <- function(min_version = "2.1") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
-        install.packages("movecost", repos = "https://cloud.r-project.org/")
+        install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
     } else {
         installed_version <- as.character(packageVersion("movecost"))
         if (compareVersion(installed_version, min_version) < 0) {
             message(paste("Updating movecost from", installed_version, "to latest version..."))
-            install.packages("movecost", repos = "https://cloud.r-project.org/")
+            install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
         }
     }
 }
@@ -45,16 +56,17 @@ check_movecost_version <- function(min_version = "2.1") {
 # Check and update movecost if needed (minimum version 2.1)
 check_movecost_version("2.1")
 
-# Load required libraries
-required_packages <- c("movecost", "sp", "sf", "progress", "raster", "dplyr")
-lapply(required_packages, require, character.only = TRUE)
-
-# Load libraries
+# Load libraries (chron, gdistance, igraph are movecost dependencies)
+library(chron)
+library(Matrix)
+library(igraph)
+library(gdistance)
 library(sp)
 library(sf)
+library(terra)
+library(raster)
 library(movecost)
 library(progress)
-library(raster)
 library(dplyr)
 
 # Define utility function for mapping numbers to strings
@@ -71,15 +83,20 @@ origin_crs <- CRS
 # Set CRS for DTM to match Origin's CRS
 #raster::crs(DTM) <- origin_crs
 studyplot_sp <- as(Area_of_interest, "Spatial")
-# Map numbers to strings using utility function
-function_map <- c("", "t", "tofp", "mp", "icmonp", "icmoffp", "icfonp", "icfoffp", "ug", "ma", "alb", "gkrs", "r", "ks", "trp", "wcs", "ree", "b", "e", "p", "pcf", "m", "hrz", "vl", "ls", "a", "h")
-Choice1 <- get_string_value(Choice1, function_map)
-Choice2 <- get_string_value(Choice2, function_map)
-Choice3 <- get_string_value(Choice3, function_map)
+# Parse comma-separated function names from string input
+# Valid functions: t,tofp,mp,icmonp,icmoffp,icfonp,icfoffp,ug,ma,alb,gkrs,r,ks,trp,wcs,ree,b,e,p,pcf,m,hrz,vl,ls,a,h
+valid_functions <- c("t", "tofp", "mp", "icmonp", "icmoffp", "icfonp", "icfoffp", "ug", "ma", "alb", "gkrs", "r", "ks", "trp", "wcs", "ree", "b", "e", "p", "pcf", "m", "hrz", "vl", "ls", "a", "h")
 
-# Define choices based on input
-choices <- c(Choice1, Choice2)
-if (Choice3 != '') choices <- c(choices, Choice3)
+# Split the input string by comma and trim whitespace
+choices <- trimws(unlist(strsplit(Functions_to_compare, ",")))
+# Filter to only valid function names
+choices <- choices[choices %in% valid_functions]
+
+# Ensure at least 2 functions are selected for comparison
+if (length(choices) < 2) {
+    stop("ERROR: Please specify at least 2 cost functions to compare, separated by commas. Example: t,mp,ug")
+}
+message(paste("Comparing cost functions:", paste(choices, collapse = ", ")))
 
 # Convert string to logical
 logical_vars <- c("PlotBarrier", "IrregularDTM", "Return_Base", "Cognitive_Slope")
@@ -88,8 +105,8 @@ for (var in logical_vars) assign(var, as.logical(get(var)))
 time_map <- c("h", "m")
 Time <- get_string_value(Time, time_map)
 # Map numbers to strings using utility function
-move_map <- c(16,8,4)
-Move <- get_string_value(Move, move_map)
+# Move is passed as literal value (16, 8, or 4), just convert to numeric
+Move <- as.numeric(Move)
 # Convert string to logical
 PlotBarrier <- as.logical(PlotBarrier)
 # If PlotBarrier is FALSE, set Barrier and Field to NULL
@@ -98,6 +115,10 @@ if(!PlotBarrier) {
   Field <- NULL
 } else {
   Move <- 8
+  # Convert Barrier from sf to Spatial object (movecost requires Spatial* object)
+  if (!is.null(Barrier) && inherits(Barrier, "sf")) {
+    Barrier <- as_Spatial(Barrier)
+  }
 }
 IrregularDTM <- as.logical(IrregularDTM)
 Return_Base <- as.logical(Return_Base)
@@ -150,44 +171,33 @@ if (!is.null(r$LCPs)) {
   if (is.na(st_crs(sf_dl1))) {
     sf_dl1 <- st_set_crs(sf_dl1, CRS) # Example with WGS84
   }
-  converti_tempo <- function(tempo_giorni) {
-    if (is.na(tempo_giorni)) {
-        return(NA)  # Return NA if the time in days is NA
+  # Convert time based on the Time parameter (h=hours, m=minutes)
+converti_tempo <- function(tempo_valore) {
+    if (is.na(tempo_valore)) return(NA)
+    if (Time == "h") {
+        ore_totali <- tempo_valore
+        giorni <- floor(ore_totali / 24)
+        ore <- floor(ore_totali %% 24)
+        minuti_decimali <- (ore_totali - floor(ore_totali)) * 60
+        minuti <- floor(minuti_decimali)
+        secondi <- round((minuti_decimali - minuti) * 60)
+    } else {
+        minuti_totali <- tempo_valore
+        giorni <- floor(minuti_totali / (24 * 60))
+        ore <- floor((minuti_totali %% (24 * 60)) / 60)
+        minuti <- floor(minuti_totali %% 60)
+        secondi <- round((minuti_totali - floor(minuti_totali)) * 60)
     }
-
-    giorni <- floor(tempo_giorni)
-    ore_decimali <- (tempo_giorni - giorni) * 24
-
-    ore <- floor(ore_decimali)
-    minuti_decimali <- (ore_decimali - ore) * 60
-    minuti <- floor(minuti_decimali)
-    secondi <- round((minuti_decimali - minuti) * 60)
-
-    # Ensure seconds do not exceed 59
-    if (secondi >= 60) {
-        secondi <- 0
-        minuti <- minuti + 1
-    }
-
-    # Ensure minutes do not exceed 59
-    if (minuti >= 60) {
-        minuti <- 0
-        ore <- ore + 1
-    }
-
-    # Plural handling for days and hours
-    giorni_label <- ifelse(giorni == 1, "day", "days")
-    ore_label <- ifelse(ore == 1, "hour", "hours")
-
-    tempo_convertito <- paste(
-        if (!is.na(giorni) && giorni > 0) paste(giorni, giorni_label) else NULL,
-        if (!is.na(ore) && ore > 0) paste(ore, ore_label) else NULL,
-        if (!is.na(minuti) && minuti > 0) paste(minuti, "minutes") else NULL,
-        if (!is.na(secondi) && secondi > 0) paste(sprintf("%02d", secondi), "seconds") else NULL,
-        sep = " "
-    )
-
-    return(tempo_convertito)
+    if (secondi >= 60) { secondi <- 0; minuti <- minuti + 1 }
+    if (minuti >= 60) { minuti <- 0; ore <- ore + 1 }
+    if (ore >= 24) { ore <- ore %% 24; giorni <- giorni + 1 }
+    parts <- c()
+    if (giorni > 0) parts <- c(parts, paste(giorni, ifelse(giorni == 1, "day", "days")))
+    if (ore > 0) parts <- c(parts, paste(ore, ifelse(ore == 1, "hour", "hours")))
+    if (minuti > 0) parts <- c(parts, paste(minuti, "minutes"))
+    if (secondi > 0) parts <- c(parts, paste(sprintf("%02d", secondi), "seconds"))
+    if (length(parts) == 0) return("0 seconds")
+    return(paste(parts, collapse = " "))
 }
 
 
@@ -197,6 +207,11 @@ if (!is.null(r$LCPs)) {
 
 
     sf_dl1$time_converted <- sapply(sf_dl1$cost, converti_tempo)
+
+    # Add length fields
+    sf_dl1$length_m <- as.numeric(st_length(sf_dl1))
+    sf_dl1$length_km <- sf_dl1$length_m / 1000
+
     print(sf_dl1)
   Output_LCP = sf_dl1
 } else {
@@ -210,44 +225,33 @@ if(Return_Base == TRUE) {
     if (is.na(st_crs(sf_dl))) {
       sf_dl <- st_set_crs(sf_dl, CRS) # Example with WGS84
     }
-    converti_tempo <- function(tempo_giorni) {
-    if (is.na(tempo_giorni)) {
-        return(NA)  # Return NA if the time in days is NA
+    # Convert time based on the Time parameter (h=hours, m=minutes)
+converti_tempo <- function(tempo_valore) {
+    if (is.na(tempo_valore)) return(NA)
+    if (Time == "h") {
+        ore_totali <- tempo_valore
+        giorni <- floor(ore_totali / 24)
+        ore <- floor(ore_totali %% 24)
+        minuti_decimali <- (ore_totali - floor(ore_totali)) * 60
+        minuti <- floor(minuti_decimali)
+        secondi <- round((minuti_decimali - minuti) * 60)
+    } else {
+        minuti_totali <- tempo_valore
+        giorni <- floor(minuti_totali / (24 * 60))
+        ore <- floor((minuti_totali %% (24 * 60)) / 60)
+        minuti <- floor(minuti_totali %% 60)
+        secondi <- round((minuti_totali - floor(minuti_totali)) * 60)
     }
-
-    giorni <- floor(tempo_giorni)
-    ore_decimali <- (tempo_giorni - giorni) * 24
-
-    ore <- floor(ore_decimali)
-    minuti_decimali <- (ore_decimali - ore) * 60
-    minuti <- floor(minuti_decimali)
-    secondi <- round((minuti_decimali - minuti) * 60)
-
-    # Ensure seconds do not exceed 59
-    if (secondi >= 60) {
-        secondi <- 0
-        minuti <- minuti + 1
-    }
-
-    # Ensure minutes do not exceed 59
-    if (minuti >= 60) {
-        minuti <- 0
-        ore <- ore + 1
-    }
-
-    # Plural handling for days and hours
-    giorni_label <- ifelse(giorni == 1, "day", "days")
-    ore_label <- ifelse(ore == 1, "hour", "hours")
-
-    tempo_convertito <- paste(
-        if (!is.na(giorni) && giorni > 0) paste(giorni, giorni_label) else NULL,
-        if (!is.na(ore) && ore > 0) paste(ore, ore_label) else NULL,
-        if (!is.na(minuti) && minuti > 0) paste(minuti, "minutes") else NULL,
-        if (!is.na(secondi) && secondi > 0) paste(sprintf("%02d", secondi), "seconds") else NULL,
-        sep = " "
-    )
-
-    return(tempo_convertito)
+    if (secondi >= 60) { secondi <- 0; minuti <- minuti + 1 }
+    if (minuti >= 60) { minuti <- 0; ore <- ore + 1 }
+    if (ore >= 24) { ore <- ore %% 24; giorni <- giorni + 1 }
+    parts <- c()
+    if (giorni > 0) parts <- c(parts, paste(giorni, ifelse(giorni == 1, "day", "days")))
+    if (ore > 0) parts <- c(parts, paste(ore, ifelse(ore == 1, "hour", "hours")))
+    if (minuti > 0) parts <- c(parts, paste(minuti, "minutes"))
+    if (secondi > 0) parts <- c(parts, paste(sprintf("%02d", secondi), "seconds"))
+    if (length(parts) == 0) return("0 seconds")
+    return(paste(parts, collapse = " "))
 }
 
 
@@ -257,6 +261,11 @@ if(Return_Base == TRUE) {
 
 
     sf_dl$time_converted <- sapply(sf_dl$cost, converti_tempo)
+
+    # Add length fields
+    sf_dl$length_m <- as.numeric(st_length(sf_dl))
+    sf_dl$length_km <- sf_dl$length_m / 1000
+
     print(sf_dl)
     Output_LCP_Back = sf_dl
   } else {

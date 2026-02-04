@@ -1,43 +1,19 @@
 {
-"ALG_DESC": "moveboundR function for calculating slope-dependant walking cost boundary(ies) around point location(s) Description The function provides the facility to calculate walking cost boundary(ies) around one or more point locations. Rationale: while movecost can calculate and render an accumulated cost surface and corresponding isolines around a point location, the user(s) might want to calculate and plot a boundary (or boundaries) corresponding to a specific walking cost limit around one or more locations, either in terms of walking time or energy expenditure.",
+"ALG_DESC": "moveboundR function for calculating slope-dependant walking cost boundary(ies) around point location(s). The function provides the facility to calculate walking cost boundary(ies) around one or more point locations.",
 "ALG_CREATOR": "Gianmarco Alberti",
 "ALG_HELP_CREATOR": "Enzo Cocca adArte srl",
-"DTM": "Digital Terrain Model (RasterLayer class); if not provided, elevation data will be acquired online for the area enclosed by the 'studyplot' parameter",
-"Points": "location(s) to which least-cost path(s) is calculated (SpatialPointsDataFrame class).",
-"Function": "----functions expressing cost as walking time\n\n
-'t' (default) uses the on-path Tobler's hiking function;\n
-'tofp' uses the off-path Tobler's hiking function;\n
-'mp' uses the Marquez-Perez et al.'s modified Tobler's function;\n
-'icmonp' uses the Irmischer-Clarke's hiking function (male, on-path);\n
-'icmoffp' uses the Irmischer-Clarke's hiking function (male, off-path);\n
-'icfonp' uses the Irmischer-Clarke's hiking function (female, on-path);\n
-'icfoffp' uses the Irmischer-Clarke's hiking function (female, off-path);\n
-'ug' uses the Uriarte Gonzalez's walking-time cost function;\n
-'ma' uses the Marin Arroyo's walking-time cost function;\n
-'alb' uses the Alberti's Tobler hiking function modified for pastoral foraging excursions;\n
-'gkrs' uses the Garmy, Kaddouri, Rozenblat, and Schneider's hiking function;\n
-'r' uses the Rees' hiking function;\n
-'ks' uses the Kondo-Seino's hiking function;\n
-----functions for wheeled-vehicles\n\n
-'wcs' uses the wheeled-vehicle critical slope cost function;\n
-----functions expressing abstract cost\n\n
-'ree' uses the relative energetic expenditure cost function;\n
-'b' uses the Bellavia's cost function;\n
-----functions expressing cost as metabolic energy expenditure\n\n
-'p' uses the Pandolf et al.'s metabolic energy expenditure cost function;\n
-'pcf' uses the Pandolf et al.'s cost function with correction factor for downhill movements;\n
-'m' uses the Minetti et al.'s metabolic energy expenditure cost function;\n
-'hrz' uses the Herzog's metabolic energy expenditure cost function;\n
-'vl' uses the Van Leusen's metabolic energy expenditure cost function;\n
-'ls' uses the Llobera-Sluckin's metabolic energy expenditure cost function;\n
- 'a' uses the Ardigo et al.'s metabolic energy expenditure cost function (for all the mentioned cost functions, see Details)",
-"Move": "number of directions in which cells are connected: 4 (rook's case), 8 (queen's case), 16 (knight and one-cell queen moves; default).",
-    "Time": "time-unit expressed by the accumulated raster and by the isolines if Tobler's and other time-related cost functions are used 'h' for hour 'm' for minutes.",
-    "Cognitive_Slope": "TRUE or FALSE (default) if the user wants or does not want the 'cognitive slope' to be used in place of the real slope",
-    "Critical_Slope": "critical slope (in percent), typically in the range 8-16 (10 by default) (used by the wheeled-vehicle cost function)",
-    "Walker_Body_Weight": "walker's body weight (in Kg; 70 by default; used by the Pandolf's and Van Leusen's cost function)",
-    "Carried_Load_Weight": "carried load weight (in Kg; 0 by default; used by the Pandolf's and Van Leusen's cost function)",
-    "N": "coefficient representing ease of movement (1 by default)",
-    "Speed": "speed in m/s (1.2 by default) (used by the Pandolf's and Van Leusen's cost function)",
-    "Zoom_Level": "zoom level for the elevation data downloaded from online sources (0 to 15; 9 by default)"
+"DTM": "Digital Terrain Model (RasterLayer class)",
+"Points": "Location(s) around which cost boundaries are calculated (SpatialPointsDataFrame class).",
+"Function": "Cost function: t (Tobler on-path), tofp (Tobler off-path), mp (Marquez-Perez), icmonp/icmoffp/icfonp/icfoffp (Irmischer-Clarke), ug (Uriarte Gonzalez), ma (Marin Arroyo), alb (Alberti), gkrs (Garmy et al.), r (Rees), ks (Kondo-Seino), wcs (wheeled-vehicle), ree (relative energetic expenditure), b (Bellavia), p/pcf (Pandolf), m (Minetti), hrz (Herzog), vl (Van Leusen), ls (Llobera-Sluckin), a (Ardigo)",
+"Move": "Number of directions: 4 (rook), 8 (queen), 16 (knight+queen, default)",
+"Time": "Time unit: h (hours) or m (minutes)",
+"Cost_Value": "Cost value for the boundary contour",
+"Cognitive_Slope": "TRUE/FALSE - use cognitive slope instead of real slope",
+"Critical_Slope": "Critical slope in percent (8-16 range, default 10)",
+"Walker_Body_Weight": "Walker's body weight in Kg (default 70)",
+"Carried_Load_Weight": "Carried load weight in Kg (default 0)",
+"N": "Ease of movement coefficient (default 1)",
+"Speed": "Speed in m/s (default 1.2)",
+"Zoom_Level": "Zoom level for online elevation data (0-15, default 9)",
+"Area": "TRUE/FALSE - add geometry for the area enclosed by the isoline"
 }

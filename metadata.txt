@@ -7,14 +7,14 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=2.1
+version=3.0
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
 about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with movecost, sf, and terra packages installed.
 
-tracker=https://github.com/enzococca/movecostTOqgis
-repository=https://github.com/enzococca/movecostTOqgis
+tracker=https://github.com/enzococca/movecost/issues
+repository=https://github.com/enzococca/movecost
 # End of mandatory metadata
 
 # Recommended items:
@@ -24,13 +24,25 @@ supportsQt6=True
 
 # Changelog
 changelog=
+    3.0 - Major UI redesign and improvements:
+        - Converted dialog to dockable panel (QDockWidget) that docks to right side of QGIS
+        - New tabbed interface: Algorithms, Results, Export, Settings
+        - R Plot Viewer: displays plots directly in the plugin panel
+        - Cost Summary: shows statistics from analysis results
+        - Export options: CSV tables, HTML reports
+        - Modern CSS styling with color-coded algorithm buttons
+        - movecomp: now supports unlimited cost function comparison (comma-separated input)
+        - All LCP outputs now include cost, time_converted, length_m, length_km fields
+        - All polygon outputs now include area_m2, area_km2, area_ha fields
+        - Fixed barrier support: proper sf to Spatial conversion for all algorithms
+        - Layer organization: automatic grouping and styling of output layers
     2.1 - Qt6/QGIS 4 compatibility, removed deprecated rgdal dependency, multilingual help files
     2.0 - Initial release with sf/terra support
 
 # Tags are comma separated with spaces allowed
-tags=python, R
+tags=python, R, least-cost path, cost surface, movement, archaeology, GIS
 
-homepage=https://github.com/enzococca/movecostTOqgis
+homepage=https://github.com/enzococca/movecost
 category=Plugins
 icon=movecost.png
 # experimental flag
