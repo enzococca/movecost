@@ -338,10 +338,9 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
             processing_temp = None
 
         # First check the dedicated movecost plots directory
+        # Using system_temp from tempfile.gettempdir() for secure temp directory access
         movecost_plot_dirs = [
             os.path.join(system_temp, 'movecost_plots'),
-            os.path.join('/tmp', 'movecost_plots'),
-            os.path.join('/private/tmp', 'movecost_plots'),
         ]
 
         # Check for movecost_latest_plot.png in dedicated directories first
@@ -369,6 +368,7 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
                     continue
 
         # Processing R provider typically saves plots to these locations
+        # All paths use secure tempfile.gettempdir() or QGIS profile paths
         temp_dirs = [
             # QGIS Processing temp folder (most likely location)
             processing_temp,
@@ -383,12 +383,6 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
             os.path.join(system_temp, 'movecost_plots'),
             # System temp (where R often saves Rplots.pdf and converted images)
             system_temp,
-            '/tmp',
-            # User home (sometimes R saves here)
-            os.path.expanduser('~'),
-            # macOS specific temp locations
-            '/private/tmp',
-            '/private/var/folders',
         ]
 
         # Filter out None values
