@@ -7,7 +7,7 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=3.0
+version=3.0.1
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
@@ -24,6 +24,7 @@ supportsQt6=True
 
 # Changelog
 changelog=
+    3.0.1 - Fix Qt6 compatibility: replaced PyQt5 import in resources_rc.py with qgis.PyQt
     3.0 - Major UI redesign and improvements:
         - Converted dialog to dockable panel (QDockWidget) that docks to right side of QGIS
         - New tabbed interface: Algorithms, Results, Export, Settings
