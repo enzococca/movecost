@@ -1,5 +1,5 @@
 {
-    "ALG_DESC": "Calculation of slope-dependent accumulated cost surface, least-cost paths, and isolines from a point origin to one or more destinations. This function calculates the anisotropic accumulated cost of movement across the terrain, considering slope and various cost models. Version 2.1 - Compatible with QGIS 4 and modern R spatial packages (sf, terra).",
+    "ALG_DESC": "Calculation of slope-dependent accumulated cost surface, least-cost paths, and isolines from a point origin to one or more destinations. This function calculates the anisotropic accumulated cost of movement across the terrain, considering slope and various cost models. Version 2.2 - Compatible with QGIS 4 and modern R spatial packages (sf, terra).",
     "ALG_CREATOR": "Gianmarco Alberti",
     "ALG_HELP_CREATOR": "Enzo Cocca - adArte srl",
     "CRS": "Coordinate Reference System for the output layers.",
@@ -17,6 +17,7 @@
     "Outp": "Output type: 'r' for raster (default), 'c' for contours only.",
     "Return_Base": "TRUE or FALSE - calculate and display least-cost paths back to the origin (dashed lines).",
     "Cognitive_Slope": "TRUE or FALSE - use cognitive/perceptual slope instead of real slope in calculations.",
+    "Topo_Dist": "TRUE or FALSE (default FALSE). When TRUE, accumulated cost is calculated using topographic (surface) distance instead of planar distance, accounting for the extra distance incurred on sloped terrain (surface = planar * sqrt(1 + slope^2); a 30% slope adds about 4.4%, a 50% slope adds about 11.8%). Recommended for time-based hiking functions (Tobler etc.). Use with caution on metabolic energy functions, which were typically derived from planar measurements. Requires movecost R package >= 2.2.",
     "Critical_Slope": "Critical slope percentage (default: 10), typically 8-16. Used by wheeled-vehicle cost function.",
     "Walker_Body_Weight": "Walker's body weight in kg (default: 70). Used by Pandolf's and Van Leusen's functions.",
     "Carried_Load_Weight": "Weight of carried load in kg (default: 0). Used by Pandolf's and Van Leusen's functions.",
