@@ -103,16 +103,16 @@ class MOVECOSTDockWidget(QDockWidget):
         try:
             # Qt6 style
             features = (
-                QDockWidget.DockWidgetFeature.DockWidgetClosable |
-                QDockWidget.DockWidgetFeature.DockWidgetMovable |
-                QDockWidget.DockWidgetFeature.DockWidgetFloatable
+                QDockWidget.DockWidgetFeature.DockWidgetClosable
+                | QDockWidget.DockWidgetFeature.DockWidgetMovable
+                | QDockWidget.DockWidgetFeature.DockWidgetFloatable
             )
         except AttributeError:
             # Qt5 style
             features = (
-                QDockWidget.DockWidgetClosable |
-                QDockWidget.DockWidgetMovable |
-                QDockWidget.DockWidgetFloatable
+                QDockWidget.DockWidgetClosable
+                | QDockWidget.DockWidgetMovable
+                | QDockWidget.DockWidgetFloatable
             )
         self.setFeatures(features)
 
