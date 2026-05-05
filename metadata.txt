@@ -7,7 +7,7 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=3.1.0
+version=3.1.1
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
@@ -20,10 +20,18 @@ repository=https://github.com/enzococca/movecost
 # Recommended items:
 
 hasProcessingProvider=no
-supportsQt6=True
 
 # Changelog
 changelog=
+    3.1.1 - Plugin repository compliance:
+        - Removed deprecated supportsQt6 metadata flag (Qt6 compatibility is
+          now determined solely by qgisMaximumVersion=4.99).
+        - Cleaned up Python source files to satisfy plugins.qgis.org's
+          Bandit/flake8 review: removed ~30 unused imports, replaced bare
+          'except:' with explicit 'except Exception:', fixed long lines,
+          replaced star imports in movecost_dialog with explicit imports,
+          removed orphan 'standard_library.install_aliases()' call.
+        - No behavior changes; this is a tooling/cleanup release.
     3.1.0 - Support movecost R package 2.2 (topo.dist parameter):
         - New "Topo_Dist" parameter (default FALSE) added to all 14 algorithm scripts
           (movecost, movealloc, movebound, movecomp, movecorr, movenetw, moverank,

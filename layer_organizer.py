@@ -6,14 +6,11 @@ Organizes output layers into groups and applies styles
 
 import os
 from qgis.core import (
-    QgsProject, QgsLayerTreeGroup, QgsRasterLayer, QgsVectorLayer,
-    QgsRasterBandStats, QgsSingleBandPseudoColorRenderer,
-    QgsColorRampShader, QgsRasterShader, QgsStyle, QgsGradientColorRamp,
-    QgsGradientStop, QgsHillshadeRenderer, QgsMultiBandColorRenderer,
-    QgsContrastEnhancement, QgsRasterPipe
+    QgsProject, QgsRasterLayer, QgsVectorLayer, QgsRasterBandStats,
+    QgsSingleBandPseudoColorRenderer, QgsColorRampShader,
+    QgsRasterShader, QgsHillshadeRenderer
 )
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtXml import QDomDocument
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 
 
@@ -42,7 +39,7 @@ class MovecostLayerOrganizer(QObject):
         if self._monitoring:
             try:
                 QgsProject.instance().layersAdded.disconnect(self._on_layers_added)
-            except:
+            except BaseException:
                 pass
             self._monitoring = False
 
@@ -50,7 +47,7 @@ class MovecostLayerOrganizer(QObject):
         """Handle newly added layers."""
         # Check if these are movecost-related layers
         movecost_keywords = ['Output_', 'LCP', 'Isoline', 'DTM', 'Accumulation',
-                            'Corridor', 'Cost', 'Alloc', 'Area', 'netw']
+                             'Corridor', 'Cost', 'Alloc', 'Area', 'netw']
 
         for layer in layers:
             layer_name = layer.name()
@@ -182,17 +179,17 @@ class MovecostLayerOrganizer(QObject):
         # Terrain colors similar to movecost R output
         color_list = [
             QgsColorRampShader.ColorRampItem(min_val, QColor(0, 97, 0), f'{min_val:.0f}m'),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.05, QColor(56, 168, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.1, QColor(121, 201, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.15, QColor(194, 230, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.2, QColor(255, 255, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.3, QColor(255, 235, 176), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.4, QColor(255, 195, 128), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.5, QColor(228, 156, 93), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.6, QColor(191, 129, 45), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.7, QColor(140, 115, 100), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.8, QColor(161, 145, 141), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.9, QColor(200, 200, 200), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.05, QColor(56, 168, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.1, QColor(121, 201, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.15, QColor(194, 230, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.2, QColor(255, 255, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.3, QColor(255, 235, 176), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.4, QColor(255, 195, 128), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.5, QColor(228, 156, 93), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.6, QColor(191, 129, 45), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.7, QColor(140, 115, 100), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.8, QColor(161, 145, 141), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.9, QColor(200, 200, 200), ''),
             QgsColorRampShader.ColorRampItem(max_val, QColor(255, 255, 255), f'{max_val:.0f}m'),
         ]
 
@@ -264,15 +261,15 @@ class MovecostLayerOrganizer(QObject):
         # Terrain colors
         color_list = [
             QgsColorRampShader.ColorRampItem(min_val, QColor(0, 97, 0), f'{min_val:.0f}m'),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.1, QColor(56, 168, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.2, QColor(121, 201, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.3, QColor(194, 230, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.4, QColor(255, 255, 0), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.5, QColor(255, 235, 176), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.6, QColor(255, 195, 128), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.7, QColor(228, 156, 93), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.8, QColor(191, 129, 45), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.9, QColor(161, 145, 141), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.1, QColor(56, 168, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.2, QColor(121, 201, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.3, QColor(194, 230, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.4, QColor(255, 255, 0), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.5, QColor(255, 235, 176), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.6, QColor(255, 195, 128), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.7, QColor(228, 156, 93), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.8, QColor(191, 129, 45), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.9, QColor(161, 145, 141), ''),
             QgsColorRampShader.ColorRampItem(max_val, QColor(255, 255, 255), f'{max_val:.0f}m'),
         ]
 
@@ -299,9 +296,9 @@ class MovecostLayerOrganizer(QObject):
         # Cost colors (green to red)
         color_list = [
             QgsColorRampShader.ColorRampItem(min_val, QColor(26, 150, 65), 'Low cost'),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.25, QColor(166, 217, 106), ''),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.5, QColor(255, 255, 192), 'Medium'),
-            QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.75, QColor(253, 174, 97), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.25, QColor(166, 217, 106), ''),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.5, QColor(255, 255, 192), 'Medium'),
+            QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.75, QColor(253, 174, 97), ''),
             QgsColorRampShader.ColorRampItem(max_val, QColor(215, 25, 28), 'High cost'),
         ]
 
@@ -337,7 +334,7 @@ def organize_movecost_layers(group_name="Movecost Results"):
 
     # Find movecost-related layers
     movecost_keywords = ['Output_', 'LCP', 'Isoline', 'DTM', 'Accumulation',
-                        'Corridor', 'Cost', 'Alloc', 'Area', 'netw', 'W_Cost']
+                         'Corridor', 'Cost', 'Alloc', 'Area', 'netw', 'W_Cost']
 
     plugin_dir = os.path.dirname(__file__)
     styles_dir = os.path.join(plugin_dir, 'styles')
@@ -400,7 +397,9 @@ def _apply_raster_style_to_layer(layer, styles_dir):
 
 def _apply_colored_hillshade_to_layer(layer):
     """Apply terrain colors with hillshade effect to a DTM layer."""
-    from qgis.core import QgsRasterBandStats, QgsSingleBandPseudoColorRenderer, QgsColorRampShader, QgsRasterShader, QgsHillshadeRenderer
+    from qgis.core import (QgsRasterBandStats, QgsSingleBandPseudoColorRenderer,
+                           QgsColorRampShader, QgsRasterShader,
+                           QgsHillshadeRenderer)
 
     provider = layer.dataProvider()
     stats = provider.bandStatistics(1, QgsRasterBandStats.All)
@@ -416,17 +415,17 @@ def _apply_colored_hillshade_to_layer(layer):
     # Terrain colors similar to movecost R output
     color_list = [
         QgsColorRampShader.ColorRampItem(min_val, QColor(0, 97, 0), f'{min_val:.0f}m'),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.05, QColor(56, 168, 0), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.1, QColor(121, 201, 0), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.15, QColor(194, 230, 0), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.2, QColor(255, 255, 0), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.3, QColor(255, 235, 176), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.4, QColor(255, 195, 128), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.5, QColor(228, 156, 93), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.6, QColor(191, 129, 45), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.7, QColor(140, 115, 100), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.8, QColor(161, 145, 141), ''),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.9, QColor(200, 200, 200), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.05, QColor(56, 168, 0), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.1, QColor(121, 201, 0), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.15, QColor(194, 230, 0), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.2, QColor(255, 255, 0), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.3, QColor(255, 235, 176), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.4, QColor(255, 195, 128), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.5, QColor(228, 156, 93), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.6, QColor(191, 129, 45), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.7, QColor(140, 115, 100), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.8, QColor(161, 145, 141), ''),
+        QgsColorRampShader.ColorRampItem(min_val + (max_val - min_val) * 0.9, QColor(200, 200, 200), ''),
         QgsColorRampShader.ColorRampItem(max_val, QColor(255, 255, 255), f'{max_val:.0f}m'),
     ]
 
