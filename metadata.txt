@@ -7,7 +7,7 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=3.0.1
+version=3.1.0
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
@@ -24,6 +24,16 @@ supportsQt6=True
 
 # Changelog
 changelog=
+    3.1.0 - Support movecost R package 2.2 (topo.dist parameter):
+        - New "Topo_Dist" parameter (default FALSE) added to all 14 algorithm scripts
+          (movecost, movealloc, movebound, movecomp, movecorr, movenetw, moverank,
+          plus their _by_polygon variants). When TRUE, accumulated cost is
+          calculated using topographic surface distance instead of planar
+          distance (surface = planar * sqrt(1 + slope^2)). Recommended for
+          time-based hiking functions; use with caution on metabolic energy
+          functions which are derived from planar measurements.
+        - Bumped minimum required movecost R package version from 2.1 to 2.2
+          (auto-installer in each rsx will now prompt the update).
     3.0.1 - Fix Qt6 compatibility: replaced PyQt5 import in resources_rc.py with qgis.PyQt
     3.0 - Major UI redesign and improvements:
         - Converted dialog to dockable panel (QDockWidget) that docks to right side of QGIS

@@ -13,6 +13,7 @@
 ##Time=selection h;m
 ##Return_Base=string TRUE
 ##Cognitive_Slope=string TRUE
+##Topo_Dist=string FALSE
 ##Critical_Slope=number 10
 ##Walker_Body_Weight=number 70
 ##Carried_Load_Weight=number 0
@@ -39,7 +40,7 @@ all_dependencies <- c("chron", "terra", "gdistance", "Matrix", "igraph", "sp", "
 install_if_missing(all_dependencies)
 
 # Function to check and update movecost package
-check_movecost_version <- function(min_version = "2.1") {
+check_movecost_version <- function(min_version = "2.2") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
         install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
@@ -52,8 +53,8 @@ check_movecost_version <- function(min_version = "2.1") {
     }
 }
 
-# Check and update movecost if needed (minimum version 2.1)
-check_movecost_version("2.1")
+# Check and update movecost if needed (minimum version 2.2)
+check_movecost_version("2.2")
 
 # Load libraries (chron, gdistance, igraph are movecost dependencies)
 library(chron)
@@ -172,6 +173,7 @@ if(!PlotBarrier) {
 IrregularDTM <- as.logical(IrregularDTM)
 Return_Base <- as.logical(Return_Base)
 Cognitive_Slope <- as.logical(Cognitive_Slope)
+Topo_Dist <- as.logical(Topo_Dist)
 # Execute movecomp function with error handling
 tryCatch({
   r <- movecomp(
@@ -193,6 +195,7 @@ tryCatch({
     V = Speed,
     z = Zoom_Level,
     oneplot = FALSE,
+    topo.dist = Topo_Dist,
     export = FALSE
   )
 },

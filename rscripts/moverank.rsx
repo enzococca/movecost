@@ -14,6 +14,7 @@
 ##Use_Corridor=string TRUE
 ##Legend_Position=selection topright;bottomright;bottom;left;topleft;right;center
 ##Cognitive_Slope=string TRUE
+##Topo_Dist=string FALSE
 ##Add_Chart=string FALSE
 ##Bubble_cex=number 0.5
 ##Critical_Slope=number 10
@@ -42,7 +43,7 @@ all_dependencies <- c("chron", "terra", "gdistance", "Matrix", "igraph", "sp", "
 install_if_missing(all_dependencies)
 
 # Function to check and update movecost package
-check_movecost_version <- function(min_version = "2.1") {
+check_movecost_version <- function(min_version = "2.2") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
         install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
@@ -55,8 +56,8 @@ check_movecost_version <- function(min_version = "2.1") {
     }
 }
 
-# Check and update movecost if needed (minimum version 2.1)
-check_movecost_version("2.1")
+# Check and update movecost if needed (minimum version 2.2)
+check_movecost_version("2.2")
 
 # Load libraries (chron, gdistance, igraph are movecost dependencies)
 library(chron)
@@ -160,6 +161,7 @@ if(!PlotBarrier) {
 }
 IrregularDTM <- as.logical(IrregularDTM)
 Cognitive_Slope <- as.logical(Cognitive_Slope)
+Topo_Dist <- as.logical(Topo_Dist)
 Add_Chart <- as.logical(Add_Chart)
 Use_Corridor <- as.logical(Use_Corridor)
 # Esegui la funzione movecost
@@ -184,6 +186,7 @@ r <- moverank(
   V = Speed,
   z = Zoom_Level,
   add.chart=Add_Chart,
+  topo.dist = Topo_Dist,
   export = FALSE
 )
 

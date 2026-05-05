@@ -12,6 +12,7 @@
 ##Function=selection t;tofp;mp;icmonp;icmoffp;icfonp;icfoffp;ug;ma;alb;gkrs;r;ks;trp;wcs;ree;b;e;p;pcf;m;hrz;vl;ls;a;h
 ##Time=selection h;m
 ##Cognitive_Slope=string TRUE
+##Topo_Dist=string FALSE
 ##Critical_Slope=number 10
 ##Walker_Body_Weight=number 70
 ##Carried_Load_Weight=number 0
@@ -38,7 +39,7 @@ all_dependencies <- c("chron", "terra", "gdistance", "Matrix", "igraph", "sp", "
 install_if_missing(all_dependencies)
 
 # Function to check and update movecost package
-check_movecost_version <- function(min_version = "2.1") {
+check_movecost_version <- function(min_version = "2.2") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
         install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
@@ -51,8 +52,8 @@ check_movecost_version <- function(min_version = "2.1") {
     }
 }
 
-# Check and update movecost if needed (minimum version 2.1)
-check_movecost_version("2.1")
+# Check and update movecost if needed (minimum version 2.2)
+check_movecost_version("2.2")
 
 # Load libraries (chron, gdistance, igraph are movecost dependencies)
 library(chron)
@@ -101,6 +102,7 @@ if(!PlotBarrier) {
 }
 
 Cognitive_Slope <- as.logical(Cognitive_Slope)
+Topo_Dist <- as.logical(Topo_Dist)
 Area <- as.logical(Area)
 r<-movebound(dtm=NULL,
   origin=p,
@@ -119,8 +121,7 @@ r<-movebound(dtm=NULL,
   V=Speed,
   z=Zoom_Level,
   cont.lab=TRUE,
-  add.geom=Area,
-  export=FALSE)
+  add.geom=Area, topo.dist=Topo_Dist, export=FALSE)
 
 dem = r$dtm
 sf_dem = dem

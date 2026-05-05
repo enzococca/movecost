@@ -8,6 +8,7 @@
 ##Breaks=number 1
 ##Time=selection h;m
 ##Cognitive_Slope=string TRUE
+##Topo_Dist=string FALSE
 ##Critical_Slope=number 10
 ##Walker_Body_Weight=number 70
 ##Carried_Load_Weight=number 0
@@ -35,7 +36,7 @@ all_dependencies <- c("chron", "terra", "gdistance", "Matrix", "igraph", "sp", "
 install_if_missing(all_dependencies)
 
 # Function to check and update movecost package
-check_movecost_version <- function(min_version = "2.1") {
+check_movecost_version <- function(min_version = "2.2") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
         install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
@@ -48,8 +49,8 @@ check_movecost_version <- function(min_version = "2.1") {
     }
 }
 
-# Check and update movecost if needed (minimum version 2.1)
-check_movecost_version("2.1")
+# Check and update movecost if needed (minimum version 2.2)
+check_movecost_version("2.2")
 
 # Load libraries (chron, gdistance, igraph are movecost dependencies)
 library(chron)
@@ -84,9 +85,10 @@ Time <- get_string_value(Time, time_map)
 # Map numbers to strings using utility function
 # Move is passed as literal value (16, 8, or 4), just convert to numeric
 Move <- as.numeric(Move)
+Topo_Dist <- as.logical(Topo_Dist)
 
 
-r<-movealloc(dtm=NULL, origin=p, studyplot=studyplot_sp,  move=Move, time=Time,funct=Function, cogn.slp=Cognitive_Slope,  sl.crit=Critical_Slope,W=Walker_Body_Weight, L=Carried_Load_Weight,N=N, V=Speed, z=Zoom_Level, cont.lab=TRUE, isolines=TRUE, breaks=Breaks, export=FALSE)
+r<-movealloc(dtm=NULL, origin=p, studyplot=studyplot_sp,  move=Move, time=Time,funct=Function, cogn.slp=Cognitive_Slope,  sl.crit=Critical_Slope,W=Walker_Body_Weight, L=Carried_Load_Weight,N=N, V=Speed, z=Zoom_Level, cont.lab=TRUE, isolines=TRUE, breaks=Breaks, topo.dist=Topo_Dist, export=FALSE)
 
 dem = r$dtm
 sf_dem = dem
