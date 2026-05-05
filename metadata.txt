@@ -7,7 +7,7 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=3.1.3
+version=3.1.4
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
@@ -23,6 +23,16 @@ hasProcessingProvider=no
 
 # Changelog
 changelog=
+    3.1.4 - Pass plugins.qgis.org Bandit + flake8 review (W503/W504 + B112/B110):
+        - Collapsed the Qt5/Qt6 dock feature flags expression into a single
+          line via getattr(QDockWidget, 'DockWidgetFeature', QDockWidget),
+          removing the multi-line OR that triggered W503 when split before
+          and W504 when split after the operator.
+        - Narrowed 4 broad 'except Exception:' handlers in plot-discovery
+          code to 'except (OSError, PermissionError):' to satisfy Bandit
+          B112 (try-except-continue) and B110 (try-except-pass) rules.
+          No behavior change: the operations that can fail are filesystem
+          calls (os.listdir, glob, getmtime), which raise OSError variants.
     3.1.3 - Plugin repository W504 compliance:
         - In movecost_dialog.py (Qt5/Qt6 dock feature flags), moved the '|'
           operator to the beginning of the continuation lines instead of the

@@ -98,22 +98,11 @@ class MOVECOSTDockWidget(QDockWidget):
         self.content_widget = MOVECOSTWidget(self)
         self.setWidget(self.content_widget)
 
-        # Allow the dock to be closed, moved, and floated
-        # Qt5/Qt6 compatible feature flags
-        try:
-            # Qt6 style
-            features = (
-                QDockWidget.DockWidgetFeature.DockWidgetClosable
-                | QDockWidget.DockWidgetFeature.DockWidgetMovable
-                | QDockWidget.DockWidgetFeature.DockWidgetFloatable
-            )
-        except AttributeError:
-            # Qt5 style
-            features = (
-                QDockWidget.DockWidgetClosable
-                | QDockWidget.DockWidgetMovable
-                | QDockWidget.DockWidgetFloatable
-            )
+        # Allow the dock to be closed, moved, and floated.
+        # Qt5/Qt6 compatible feature flags: in Qt6 the constants live under
+        # QDockWidget.DockWidgetFeature; in Qt5 they are class-level attributes.
+        F = getattr(QDockWidget, 'DockWidgetFeature', QDockWidget)
+        features = F.DockWidgetClosable | F.DockWidgetMovable | F.DockWidgetFloatable
         self.setFeatures(features)
 
 
@@ -435,7 +424,7 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
                                     latest_plot = plot_file
                         except (OSError, IOError):
                             continue
-                except Exception:
+                except (OSError, PermissionError):
                     continue
 
             # Also search up to two levels deep for processing subdirectories
@@ -455,7 +444,7 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
                                                 latest_plot = plot_file
                                     except (OSError, IOError):
                                         continue
-                            except Exception:
+                            except (OSError, PermissionError):
                                 continue
 
                         # Second level subdirectory (for nested temp structures)
@@ -474,7 +463,7 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
                                                             latest_plot = plot_file
                                                 except (OSError, IOError):
                                                     continue
-                                        except Exception:
+                                        except (OSError, PermissionError):
                                             continue
                         except (OSError, PermissionError):
                             continue
@@ -494,7 +483,7 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
                                     latest_plot = plot_file
                         except (OSError, IOError):
                             continue
-            except Exception:
+            except (OSError, PermissionError):
                 pass
 
         if latest_plot and latest_plot.lower().endswith(('.png', '.jpg', '.jpeg')):
