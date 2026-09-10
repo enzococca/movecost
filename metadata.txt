@@ -7,7 +7,7 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=4.0.0
+version=4.0.1
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
@@ -23,6 +23,15 @@ hasProcessingProvider=no
 
 # Changelog
 changelog=
+    4.0.1 - Qt6 enum scoping (plugins.qgis.org Qt6 checker, 16 issues):
+        - Fully scoped every Qt/QGIS enum flagged by the repository checker:
+          Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.
+          SmoothTransformation, Qt.KeyboardModifier.ShiftModifier,
+          Qt.DockWidgetArea.RightDockWidgetArea, QgsRasterBandStats.Stats.All,
+          QgsColorRampShader.Type.Interpolated (movecost.py,
+          movecost_dialog.py, layer_organizer.py).
+        - The scoped forms resolve on both Qt5 (PyQt5) and Qt6 (PyQt6)
+          bindings, verified against QGIS 3.x/Qt5; no behavior change.
     4.0.0 - Port to the movecost R package 3.0.0 (mc_* API):
         - movecost 3.0.0 removed the legacy movecost()/movebound()/movecorr()/
           movealloc()/movecomp()/movenetw()/moverank() functions: every call

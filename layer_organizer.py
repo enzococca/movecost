@@ -166,7 +166,7 @@ class MovecostLayerOrganizer(QObject):
     def _apply_colored_hillshade(self, layer):
         """Apply terrain colors with hillshade effect to a raster layer."""
         provider = layer.dataProvider()
-        stats = provider.bandStatistics(1, QgsRasterBandStats.All)
+        stats = provider.bandStatistics(1, QgsRasterBandStats.Stats.All)
 
         min_val = stats.minimumValue
         max_val = stats.maximumValue
@@ -174,7 +174,7 @@ class MovecostLayerOrganizer(QObject):
         # Create color ramp shader with terrain colors
         shader = QgsRasterShader()
         color_ramp = QgsColorRampShader()
-        color_ramp.setColorRampType(QgsColorRampShader.Interpolated)
+        color_ramp.setColorRampType(QgsColorRampShader.Type.Interpolated)
 
         # Terrain colors similar to movecost R output
         color_list = [
@@ -248,7 +248,7 @@ class MovecostLayerOrganizer(QObject):
     def _apply_terrain_colors(self, layer):
         """Apply terrain color ramp to a raster layer (legacy method)."""
         provider = layer.dataProvider()
-        stats = provider.bandStatistics(1, QgsRasterBandStats.All)
+        stats = provider.bandStatistics(1, QgsRasterBandStats.Stats.All)
 
         min_val = stats.minimumValue
         max_val = stats.maximumValue
@@ -256,7 +256,7 @@ class MovecostLayerOrganizer(QObject):
         # Create color ramp shader
         shader = QgsRasterShader()
         color_ramp = QgsColorRampShader()
-        color_ramp.setColorRampType(QgsColorRampShader.Interpolated)
+        color_ramp.setColorRampType(QgsColorRampShader.Type.Interpolated)
 
         # Terrain colors
         color_list = [
@@ -283,7 +283,7 @@ class MovecostLayerOrganizer(QObject):
     def _apply_cost_colors(self, layer):
         """Apply cost surface color ramp (green to red)."""
         provider = layer.dataProvider()
-        stats = provider.bandStatistics(1, QgsRasterBandStats.All)
+        stats = provider.bandStatistics(1, QgsRasterBandStats.Stats.All)
 
         min_val = stats.minimumValue
         max_val = stats.maximumValue
@@ -291,7 +291,7 @@ class MovecostLayerOrganizer(QObject):
         # Create color ramp shader
         shader = QgsRasterShader()
         color_ramp = QgsColorRampShader()
-        color_ramp.setColorRampType(QgsColorRampShader.Interpolated)
+        color_ramp.setColorRampType(QgsColorRampShader.Type.Interpolated)
 
         # Cost colors (green to red)
         color_list = [
@@ -402,7 +402,7 @@ def _apply_colored_hillshade_to_layer(layer):
                            QgsHillshadeRenderer)
 
     provider = layer.dataProvider()
-    stats = provider.bandStatistics(1, QgsRasterBandStats.All)
+    stats = provider.bandStatistics(1, QgsRasterBandStats.Stats.All)
 
     min_val = stats.minimumValue
     max_val = stats.maximumValue
@@ -410,7 +410,7 @@ def _apply_colored_hillshade_to_layer(layer):
     # Create color ramp shader with terrain colors
     shader = QgsRasterShader()
     color_ramp = QgsColorRampShader()
-    color_ramp.setColorRampType(QgsColorRampShader.Interpolated)
+    color_ramp.setColorRampType(QgsColorRampShader.Type.Interpolated)
 
     # Terrain colors similar to movecost R output
     color_list = [

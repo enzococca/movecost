@@ -349,8 +349,8 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
                             scaled_pixmap = pixmap.scaled(
                                 self.label_plot.width() if self.label_plot.width() > 100 else 350,
                                 self.label_plot.height() if self.label_plot.height() > 100 else 250,
-                                Qt.KeepAspectRatio,
-                                Qt.SmoothTransformation
+                                Qt.AspectRatioMode.KeepAspectRatio,
+                                Qt.TransformationMode.SmoothTransformation
                             )
                             self.label_plot.setPixmap(scaled_pixmap)
                             self.label_plot.setToolTip("Plot: movecost_latest_plot.png")
@@ -494,8 +494,8 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
                 scaled_pixmap = pixmap.scaled(
                     self.label_plot.width() if self.label_plot.width() > 100 else 350,
                     self.label_plot.height() if self.label_plot.height() > 100 else 250,
-                    Qt.KeepAspectRatio,
-                    Qt.SmoothTransformation
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
                 )
                 self.label_plot.setPixmap(scaled_pixmap)
                 self.label_plot.setToolTip(f"Plot: {os.path.basename(latest_plot)}")
@@ -511,7 +511,7 @@ class MOVECOSTWidget(QWidget, FORM_CLASS):
         try:
             shift_modifier = Qt.KeyboardModifier.ShiftModifier
         except AttributeError:
-            shift_modifier = Qt.ShiftModifier
+            shift_modifier = Qt.KeyboardModifier.ShiftModifier
 
         if modifiers == shift_modifier:
             self._show_search_debug()
@@ -577,8 +577,8 @@ Current plot path: {self.current_plot_path or 'None'}
                 scaled_pixmap = pixmap.scaled(
                     self.label_plot.width() if self.label_plot.width() > 100 else 350,
                     self.label_plot.height() if self.label_plot.height() > 100 else 250,
-                    Qt.KeepAspectRatio,
-                    Qt.SmoothTransformation
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
                 )
                 self.label_plot.setPixmap(scaled_pixmap)
                 self.label_plot.setToolTip(f"Plot: {os.path.basename(file_path)}")

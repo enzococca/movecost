@@ -192,7 +192,7 @@ class MOVECOST:
                 dock_area = Qt.DockWidgetArea.RightDockWidgetArea
             except AttributeError:
                 # Qt5 style
-                dock_area = Qt.RightDockWidgetArea
+                dock_area = Qt.DockWidgetArea.RightDockWidgetArea
             self.iface.addDockWidget(dock_area, self.dock_widget)
         else:
             # If dock widget already exists, just show/raise it
