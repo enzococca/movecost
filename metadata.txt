@@ -7,11 +7,11 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=3.1.4
+version=4.0.0
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
-about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with movecost, sf, and terra packages installed.
+about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with the movecost package >= 3.0.0 (terra, sf, igraph, ggplot2; elevatr for the by-polygon variants).
 
 tracker=https://github.com/enzococca/movecost/issues
 repository=https://github.com/enzococca/movecost
@@ -23,6 +23,37 @@ hasProcessingProvider=no
 
 # Changelog
 changelog=
+    4.0.0 - Port to the movecost R package 3.0.0 (mc_* API):
+        - movecost 3.0.0 removed the legacy movecost()/movebound()/movecorr()/
+          movealloc()/movecomp()/movenetw()/moverank() functions: every call
+          now errors with ".Defunct". All 14 Processing scripts were ported
+          to the new architecture: the cost surface is built once with
+          mc_surface() and reused by every analysis (mc_accum, mc_paths,
+          mc_corridor, mc_boundary, mc_alloc, mc_network, mc_rank, mc_comp).
+        - Dependency stack updated: terra + sf + igraph + ggplot2 (raster is
+          kept only because the QGIS R provider hands rasters over as
+          RasterBrick; elevatr is needed by the by-polygon variants). The
+          retired 2.x dependencies chron, gdistance, sp and Matrix are no
+          longer installed.
+        - The parameter interface of every algorithm is UNCHANGED (existing
+          models and pyArchInit keep working). Two new optional parameters:
+          Corridor_Method (reach/through) on Movecorr — 'through' is the new
+          directional corridor of movecost 3.0 — and Penalty on Moverank,
+          whose LCPN is no longer capped at 6.
+        - IrregularDTM is kept for compatibility but has no effect: NoData
+          cells are excluded from the cost graph by construction in 3.0.
+        - Result fields preserved (cost, length_m, length_km, time_converted,
+          area_m2/km2/ha) plus the new cost_hms from mc_paths/mc_rank;
+          movebound polygons now carry the exact area and perimeter computed
+          by mc_boundary; the corridor accumulated surfaces A/B are two
+          cheap extra mc_accum() queries on the shared cost surface.
+        - Plots are ggplot2-based and still saved to
+          <tempdir>/movecost_plots/movecost_latest_plot.png for the
+          pyArchInit results panel.
+        - Note: movecost 3.0.0 also corrects errors of the 2.2 cost
+          functions (ks, ma, pcf, p, vl, h and dynamic-speed metabolic
+          costs with V=0): results with those settings differ (correctly)
+          from the 2.x series.
     3.1.4 - Pass plugins.qgis.org Bandit + flake8 review (W503/W504 + B112/B110):
         - Collapsed the Qt5/Qt6 dock feature flags expression into a single
           line via getattr(QDockWidget, 'DockWidgetFeature', QDockWidget),

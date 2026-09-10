@@ -11,6 +11,7 @@
 ##Function=selection t;tofp;mp;icmonp;icmoffp;icfonp;icfoffp;ug;ma;alb;gkrs;r;ks;trp;wcs;ree;b;e;p;pcf;m;hrz;vl;ls;a;h
 ##Time=selection h;m
 ##LCPN=number 3
+##Penalty=number 0.01
 ##Use_Corridor=string TRUE
 ##Legend_Position=selection topright;bottomright;bottom;left;topleft;right;center
 ##Cognitive_Slope=string TRUE
@@ -23,12 +24,20 @@
 ##N=number 1
 ##Speed=number 1
 ##Zoom_Level=number 9
-
 ##Output_LCP=output vector
 ##Output_Least_Cost_Corridor=output raster
 ##showplots
 
-# Function to install missing packages
+# ===========================================================================
+# Ported to the movecost R package 3.0.0 (mc_* API).
+#
+# movecost 3.0.0 removed the legacy movecost()/movebound()/movecorr()/
+# movealloc()/movecomp()/movenetw()/moverank() functions (.Defunct): the
+# cost surface is now built once with mc_surface() and reused by every
+# analysis function. The 2.x dependencies chron/gdistance/sp/Matrix are
+# gone; the computational core is terra + sf + igraph, plotting is ggplot2.
+# ===========================================================================
+
 install_if_missing <- function(packages) {
     for (pkg in packages) {
         if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -38,12 +47,11 @@ install_if_missing <- function(packages) {
     }
 }
 
-# All dependencies required by movecost (including indirect dependencies)
-all_dependencies <- c("chron", "terra", "gdistance", "Matrix", "igraph", "sp", "sf", "raster", "progress")
-install_if_missing(all_dependencies)
+# movecost 3.0 dependencies (raster is kept for the QGIS R provider, which
+# hands rasters over as RasterBrick objects)
+install_if_missing(c("terra", "sf", "igraph", "ggplot2", "raster"))
 
-# Function to check and update movecost package
-check_movecost_version <- function(min_version = "2.2") {
+check_movecost_version <- function(min_version = "3.0.0") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
         install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
@@ -56,180 +64,117 @@ check_movecost_version <- function(min_version = "2.2") {
     }
 }
 
-# Check and update movecost if needed (minimum version 2.2)
-check_movecost_version("2.2")
+# movecost >= 3.0.0 is required: the legacy 2.x functions were removed
+check_movecost_version("3.0.0")
 
-# Load libraries (chron, gdistance, igraph are movecost dependencies)
-library(chron)
-library(Matrix)
-library(igraph)
-library(gdistance)
-library(sp)
 library(sf)
 library(terra)
-library(raster)
+library(ggplot2)
 library(movecost)
-library(progress)
 
-# Define utility function for mapping numbers to strings
 get_string_value <- function(val, string_map) {
     string_map[val + 1] # +1 because R indexing starts from 1
 }
 
-# Load input raster - save filename before conversion (brick loses file reference)
-dtm_filename <- tryCatch(sources(DTM)[1], error = function(e) filename(DTM))
-DTM <- raster(DTM)
+# --- shared helpers --------------------------------------------------------
 
-# Get CRS from input vector (Origin)
-origin_crs <- CRS
-
-raster::crs(DTM) <- origin_crs
-studyplot_sp <- DTM
-
-# Force read values into memory if not already loaded
-if (!hasValues(studyplot_sp)) {
-    if (!is.null(dtm_filename) && dtm_filename != "" && file.exists(dtm_filename)) {
-        message(paste("Reading raster from file:", dtm_filename))
-        studyplot_sp <- raster(dtm_filename)
-        studyplot_sp <- readAll(studyplot_sp)
+# Accept the DTM however the QGIS R provider hands it over (RasterBrick /
+# RasterLayer / SpatRaster / file path) and return an in-memory SpatRaster.
+mc_read_dtm <- function(x, crs_fallback = NULL) {
+    if (inherits(x, "SpatRaster")) {
+        dtm <- x[[1]]
+    } else if (is.character(x)) {
+        dtm <- terra::rast(x)[[1]]
     } else {
-        studyplot_sp <- readAll(studyplot_sp)
-    }
-}
-
-# Final check if raster has values
-if (!hasValues(studyplot_sp)) {
-    stop("ERROR: The input raster (DTM) has no values. Please provide a valid Digital Terrain Model with elevation data.")
-}
-
-# Check DTM validity
-dtm_min <- cellStats(studyplot_sp, stat='min', na.rm=TRUE)
-dtm_max <- cellStats(studyplot_sp, stat='max', na.rm=TRUE)
-dtm_range <- dtm_max - dtm_min
-
-message(paste("DTM min:", dtm_min, "max:", dtm_max, "range:", dtm_range))
-
-# Validate DTM has actual elevation data (not a mask or constant values)
-if (is.na(dtm_min) || is.na(dtm_max)) {
-    stop("ERROR: The input DTM raster contains only NA values. Please provide a valid Digital Terrain Model.")
-}
-if (dtm_range < 1) {
-    stop(paste("ERROR: The input DTM has no elevation variation (all values =", dtm_min, "). Please provide a valid Digital Terrain Model with actual elevation data, not a mask layer."))
-}
-
-# Replace only Inf values with max elevation (leave NAs as they are - movecost handles them)
-inf_count <- cellStats(studyplot_sp == Inf, stat='sum', na.rm=TRUE)
-if (inf_count > 0) {
-    message(paste("Replacing", inf_count, "Inf values with max elevation"))
-    studyplot_sp[studyplot_sp == Inf] <- dtm_max
-}
-
-print(studyplot_sp)
-
-# Create a polygon from DTM valid land data extent for clipping
-# Only include cells with elevation > 0 (exclude sea/water)
-dtm_land <- studyplot_sp
-dtm_land[dtm_land <= 0] <- NA
-dtm_poly <- rasterToPolygons(dtm_land, dissolve=TRUE)
-dtm_sf_boundary <- st_as_sf(dtm_poly)
-if (is.na(st_crs(dtm_sf_boundary))) {
-  dtm_sf_boundary <- st_set_crs(dtm_sf_boundary, CRS)
-}
-
-# Mappa i numeri in stringhe utilizzando la funzione di utilità
-function_map <- c("t", "tofp", "mp", "icmonp", "icmoffp", "icfonp", "icfoffp", "ug", "ma", "alb", "gkrs", "r", "ks", "trp", "wcs", "ree", "b", "e", "p", "pcf", "m", "hrz", "vl", "ls", "a", "h")
-Function <- get_string_value(Function, function_map)
-
-time_map <- c("h", "m")
-Time <- get_string_value(Time, time_map)
-# Map numbers to strings using utility function
-# Move is passed as literal value (16, 8, or 4), just convert to numeric
-Move <- as.numeric(Move)
-
-
-# Convert string to logical
-PlotBarrier <- as.logical(PlotBarrier)
-# If PlotBarrier is FALSE, set Barrier and Field to NULL
-if(!PlotBarrier) {
-  Barrier <- NULL
-} else {
-  Move <- 8
-  # Convert Barrier from sf to Spatial object (movecost requires Spatial* object)
-  if (!is.null(Barrier) && inherits(Barrier, "sf")) {
-    Barrier <- as_Spatial(Barrier)
-  }
-}
-IrregularDTM <- as.logical(IrregularDTM)
-Cognitive_Slope <- as.logical(Cognitive_Slope)
-Topo_Dist <- as.logical(Topo_Dist)
-Add_Chart <- as.logical(Add_Chart)
-Use_Corridor <- as.logical(Use_Corridor)
-# Esegui la funzione movecost
-r <- moverank(
-  dtm = studyplot_sp,
-  origin = as_Spatial(Origin),
-  destin = as_Spatial(Destination),
-  studyplot = NULL,
-  barrier = Barrier,
-  plot.barrier = PlotBarrier,
-  irregular.dtm = IrregularDTM,
-  funct = Function,
-  time = Time,
-  lcp.n = LCPN,
-  use.corr=Use_Corridor,
-  move = Move,
-  cogn.slp = Cognitive_Slope,
-  sl.crit = Critical_Slope,
-  W = Walker_Body_Weight,
-  L = Carried_Load_Weight,
-  N = N,
-  V = Speed,
-  z = Zoom_Level,
-  add.chart=Add_Chart,
-  topo.dist = Topo_Dist,
-  export = FALSE
-)
-
-b1=r$LCPs
-sf_object_b1 = st_as_sf(b1)
-# Imposta il CRS se non è definito
-if (is.na(st_crs(sf_object_b1))) {
-  sf_object_b1 <- st_set_crs(sf_object_b1, CRS) # esempio con WGS84
-}
-
-# Ensure cost field exists - try to extract from ranking table if missing
-if (!"cost" %in% names(sf_object_b1)) {
-    # Try to get cost from dest.loc.w.cost if available
-    if (!is.null(r$dest.loc.w.cost)) {
-        dest_costs_sf <- st_as_sf(r$dest.loc.w.cost)
-        if ("cost" %in% names(dest_costs_sf)) {
-            dest_costs <- dest_costs_sf$cost
-            if (length(dest_costs) == nrow(sf_object_b1)) {
-                sf_object_b1$cost <- dest_costs
-            } else if (length(dest_costs) >= 1) {
-                sf_object_b1$cost <- dest_costs[1:min(length(dest_costs), nrow(sf_object_b1))]
-            }
+        src <- tryCatch(raster::filename(x), error = function(e) "")
+        dtm <- if (!is.null(src) && nzchar(src) && file.exists(src)) {
+            terra::rast(src)[[1]]
+        } else {
+            terra::rast(x)[[1]]
         }
     }
+    if (!terra::hasValues(dtm)) {
+        stop("ERROR: The input raster has no values. Please provide a valid Digital Terrain Model (DTM) with elevation data.")
+    }
+    rng <- as.numeric(terra::global(dtm, c("min", "max"), na.rm = TRUE))
+    message(paste("DTM min:", rng[1], "max:", rng[2], "range:", rng[2] - rng[1]))
+    if (any(is.na(rng))) {
+        stop("ERROR: The input DTM raster contains only NA values. Please provide a valid Digital Terrain Model.")
+    }
+    if ((rng[2] - rng[1]) < 1) {
+        stop(paste("ERROR: The input DTM has no elevation variation (all values =", rng[1], "). Please provide a valid Digital Terrain Model with actual elevation data, not a mask layer."))
+    }
+    inf_count <- as.numeric(terra::global(is.infinite(dtm), "sum", na.rm = TRUE))
+    if (isTRUE(inf_count > 0)) {
+        message(paste("Replacing", inf_count, "Inf values with max elevation"))
+        dtm[is.infinite(dtm)] <- rng[2]
+    }
+    if (is.na(terra::crs(dtm)) || terra::crs(dtm) == "") {
+        if (!is.null(crs_fallback)) terra::crs(dtm) <- crs_fallback
+    }
+    dtm
 }
 
-# Convert time based on the Time parameter (h=hours, m=minutes)
-converti_tempo <- function(tempo_valore) {
-    if (is.na(tempo_valore)) return(NA)
-    if (Time == "h") {
-        ore_totali <- tempo_valore
-        giorni <- floor(ore_totali / 24)
-        ore <- floor(ore_totali %% 24)
-        minuti_decimali <- (ore_totali - floor(ore_totali)) * 60
-        minuti <- floor(minuti_decimali)
-        secondi <- round((minuti_decimali - minuti) * 60)
-    } else {
-        minuti_totali <- tempo_valore
-        giorni <- floor(minuti_totali / (24 * 60))
-        ore <- floor((minuti_totali %% (24 * 60)) / 60)
-        minuti <- floor(minuti_totali %% 60)
-        secondi <- round((minuti_totali - floor(minuti_totali)) * 60)
+# Polygon of the land area (elevation > 0), used to clip the vector outputs
+# so isolines/paths do not run into sea cells — same behaviour as the 2.x
+# scripts.
+mc_land_boundary <- function(dtm, crs_fallback = NULL) {
+    land <- dtm
+    land[land <= 0] <- NA
+    land <- !is.na(land)
+    land[land == 0] <- NA
+    poly <- sf::st_as_sf(terra::as.polygons(land, dissolve = TRUE))
+    if (is.na(sf::st_crs(poly)) && !is.null(crs_fallback)) {
+        poly <- sf::st_set_crs(poly, crs_fallback)
     }
+    sf::st_union(poly)
+}
+
+mc_ensure_crs <- function(obj, crs_fallback) {
+    if (inherits(obj, "sf") && is.na(sf::st_crs(obj))) {
+        obj <- sf::st_set_crs(obj, crs_fallback)
+    }
+    obj
+}
+
+mc_add_lengths <- function(obj) {
+    if (inherits(obj, "sf") && nrow(obj) > 0) {
+        obj$length_m <- as.numeric(sf::st_length(obj))
+        obj$length_km <- obj$length_m / 1000
+    }
+    obj
+}
+
+mc_add_areas <- function(obj) {
+    if (inherits(obj, "sf") && nrow(obj) > 0) {
+        obj$area_m2 <- as.numeric(sf::st_area(obj))
+        obj$area_km2 <- obj$area_m2 / 1e6
+        obj$area_ha <- obj$area_m2 / 1e4
+    }
+    obj
+}
+
+mc_clip <- function(obj, boundary) {
+    if (!inherits(obj, "sf") || nrow(obj) == 0) return(obj)
+    out <- tryCatch(suppressWarnings(sf::st_intersection(obj, boundary)),
+                    error = function(e) obj)
+    if (nrow(out) == 0) obj else out
+}
+
+mc_empty_sf <- function(crs_fallback) {
+    sf::st_sf(geometry = sf::st_sfc(), crs = crs_fallback)
+}
+
+# Human-readable travel time from a cost value in hours (Time = "h") or
+# minutes (Time = "m") — same output format as the 2.x scripts, consumed by
+# the pyArchInit "Movecost" tab (field `time_converted`).
+converti_tempo <- function(tempo_valore) {
+    if (is.na(tempo_valore) || !is.numeric(tempo_valore)) return(NA)
+    minuti_totali <- if (Time == "h") tempo_valore * 60 else tempo_valore
+    giorni <- floor(minuti_totali / (24 * 60))
+    ore <- floor((minuti_totali %% (24 * 60)) / 60)
+    minuti <- floor(minuti_totali %% 60)
+    secondi <- round((minuti_totali - floor(minuti_totali)) * 60)
     if (secondi >= 60) { secondi <- 0; minuti <- minuti + 1 }
     if (minuti >= 60) { minuti <- 0; ore <- ore + 1 }
     if (ore >= 24) { ore <- ore %% 24; giorni <- giorni + 1 }
@@ -239,36 +184,109 @@ converti_tempo <- function(tempo_valore) {
     if (minuti > 0) parts <- c(parts, paste(minuti, "minutes"))
     if (secondi > 0) parts <- c(parts, paste(sprintf("%02d", secondi), "seconds"))
     if (length(parts) == 0) return("0 seconds")
-    return(paste(parts, collapse = " "))
+    paste(parts, collapse = " ")
+}
+
+mc_add_time <- function(obj, cost_col = "cost") {
+    if (inherits(obj, "sf") && nrow(obj) > 0 && cost_col %in% names(obj)) {
+        obj$time_converted <- sapply(obj[[cost_col]], converti_tempo)
+    }
+    obj
+}
+
+# Save the ggplot for the pyArchInit results panel and the QGIS result
+# viewer (##showplots).
+mc_finish_plot <- function(p, output_plot = NULL) {
+    plot_temp_dir <- file.path(tempdir(), "movecost_plots")
+    dir.create(plot_temp_dir, showWarnings = FALSE, recursive = TRUE)
+    plot_file <- file.path(plot_temp_dir, "movecost_latest_plot.png")
+    tryCatch({
+        ggplot2::ggsave(plot_file, plot = p, width = 8, height = 6, dpi = 100)
+        message(paste("Plot saved to:", plot_file))
+        if (!is.null(output_plot) && output_plot != "" && output_plot != "NA") {
+            file.copy(plot_file, output_plot, overwrite = TRUE)
+        }
+    }, error = function(e) {
+        message(paste("Warning: Could not save plot:", e$message))
+    })
+    print(p)
 }
 
 
-    # Visualizza i valori non numerici o mancanti
-    valori_non_numerici_o_mancanti <- is.na(sf_object_b1$cost) | sapply(sf_object_b1$cost, function(x) !is.numeric(x))
-    print(sf_object_b1[valori_non_numerici_o_mancanti, ])
+# --- decode the Processing enum/string parameters --------------------------
+function_map <- c("t", "tofp", "mp", "icmonp", "icmoffp", "icfonp", "icfoffp", "ug", "ma", "alb", "gkrs", "r", "ks", "trp", "wcs", "ree", "b", "e", "p", "pcf", "m", "hrz", "vl", "ls", "a", "h")
+Function <- get_string_value(Function, function_map)
+time_map <- c("h", "m")
+Time <- get_string_value(Time, time_map)
+Move <- as.integer(Move)
+Cognitive_Slope <- as.logical(Cognitive_Slope)
+Topo_Dist <- as.logical(Topo_Dist)
 
 
-    sf_object_b1$time_converted <- sapply(sf_object_b1$cost, converti_tempo)
-
-    # Add length fields
-    sf_object_b1$length_m <- as.numeric(st_length(sf_object_b1))
-    sf_object_b1$length_km <- sf_object_b1$length_m / 1000
-
-    print(sf_object_b1)
-
-    # Clip LCPs to DTM boundary
-    sf_object_b1 <- st_intersection(sf_object_b1, st_union(dtm_sf_boundary))
-
-    Output_LCP =sf_object_b1
-
-# Convert raster output to SpatialPixelsDataFrame and write to GeoTIFF
-if(Use_Corridor==TRUE) {
-    print(r$'least-cost corridor')
-    sf_object_lcp <- r$'least-cost corridor'
-    if (is.na(crs(sf_object_lcp))) {
-        crs(sf_object_lcp) <- CRS # esempio con WGS84sf_object_lcp <- st_set_crs(sf_object_lcp, CRS) # esempio con WGS84
+PlotBarrier <- as.logical(PlotBarrier)
+if (!PlotBarrier) {
+    Barrier <- NULL
+    Field <- 0
+} else {
+    # Barriers require the 8-direction move set (as in the 2.x scripts)
+    Move <- 8L
+    Barrier <- mc_ensure_crs(Barrier, CRS)
 }
-    crs(studyplot_sp)<-crs(sf_object_lcp)
-    sf_object_cropped = mask(sf_object_lcp, studyplot_sp)
-    Output_Least_Cost_Corridor=sf_object_cropped
+
+
+IrregularDTM <- as.logical(IrregularDTM)
+if (isTRUE(IrregularDTM)) {
+    message("Note: irregular DTMs are handled automatically by movecost >= 3.0 (NoData cells are excluded from the cost graph); the IrregularDTM option is kept for compatibility and has no effect.")
 }
+
+
+dtm <- mc_read_dtm(DTM, CRS)
+land_boundary <- mc_land_boundary(dtm, CRS)
+
+
+# --- build the cost surface once (movecost 3.0 core) -----------------------
+surf <- mc_surface(
+    dtm = dtm,
+    funct = Function,
+    move = Move,
+    barrier = Barrier,
+    field = if (is.null(Barrier)) 0 else Field,
+    cogn.slp = Cognitive_Slope,
+    topo.dist = Topo_Dist,
+    N = N,
+    sl.crit = Critical_Slope,
+    W = Walker_Body_Weight,
+    L = Carried_Load_Weight,
+    V = Speed
+)
+
+
+Origin <- mc_ensure_crs(Origin, CRS)
+Destination <- mc_ensure_crs(Destination, CRS)
+Use_Corridor <- as.logical(Use_Corridor)
+Add_Chart <- as.logical(Add_Chart)
+if (nrow(Origin) > 1) message("moverank: using the first feature of the Origin layer.")
+if (nrow(Destination) > 1) message("moverank: using the first feature of the Destination layer.")
+
+# LCPN ranked paths; in movecost 3.0 any number of ranks is allowed
+# (the 2.x cap of 6 is gone) and the avoidance strength is tunable
+# through the Penalty parameter.
+rnk <- mc_rank(surf, origin = Origin[1, ], destin = Destination[1, ],
+               k = as.integer(LCPN), penalty = Penalty, time = Time)
+
+lcp <- mc_add_time(mc_add_lengths(mc_ensure_crs(rnk$paths, CRS)))
+Output_LCP <- lcp
+
+corr_r <- rnk$corridor
+if (inherits(corr_r, "SpatRaster")) {
+    if (is.na(terra::crs(corr_r)) || terra::crs(corr_r) == "") terra::crs(corr_r) <- CRS
+    Output_Least_Cost_Corridor <- corr_r
+} else {
+    # keep the declared raster output valid even without a corridor
+    Output_Least_Cost_Corridor <- terra::rast(dtm) * NA
+}
+
+plot_type <- if (isTRUE(Add_Chart)) "chart" else if (isTRUE(Use_Corridor)) "corridor" else "map"
+p <- plot(rnk, type = plot_type) + ggplot2::ggtitle(paste("Ranked least-cost paths (k =", LCPN, ") -", surf$funct.label))
+mc_finish_plot(p, NULL)
+

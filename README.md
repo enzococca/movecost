@@ -19,6 +19,21 @@ restricts the analysis to an area of interest:
 - `movenetw` — least-cost network across multiple origins
 - `moverank` — rank multiple destinations by cost from a single origin
 
+## 4.0.0 — movecost R package 3.0.0 (mc_* API)
+
+Version 4.0.0 ports all 14 Processing scripts to the redesigned movecost R
+package 3.0.0, which removed the legacy `movecost()` / `movebound()` /
+`movecorr()` / `movealloc()` / `movecomp()` / `movenetw()` / `moverank()`
+functions. Each script now builds the cost surface once with `mc_surface()`
+and reuses it for every analysis (`mc_accum()`, `mc_paths()`,
+`mc_corridor()`, `mc_boundary()`, `mc_alloc()`, `mc_network()`,
+`mc_rank()`, `mc_comp()`), on the terra + sf + igraph stack with ggplot2
+plots. The parameter interface of every algorithm is unchanged; two new
+optional parameters are exposed: `Corridor_Method` (reach/through, Movecorr)
+and `Penalty` (Moverank, whose LCPN is no longer capped at 6). The
+`IrregularDTM` option is kept for compatibility but is handled
+automatically by movecost ≥ 3.0.
+
 ## Topo_Dist parameter (since v3.1.0, requires `movecost` R package ≥ 2.2)
 
 All algorithms now expose the `Topo_Dist` parameter (default `FALSE`).
@@ -43,8 +58,9 @@ measurements, so enabling `Topo_Dist` may double-count slope effects.
 
 - QGIS ≥ 3.0 (Qt5 and Qt6 compatible)
 - [Processing R Provider](https://north-road.github.io/qgis-processing-r/) plugin
-- R installation with the `movecost` package ≥ 2.2 (auto-installed on first
-  run by each script)
+- R installation with the `movecost` package ≥ 3.0.0 (auto-installed on
+  first run by each script), plus `terra`, `sf`, `igraph`, `ggplot2`
+  (`elevatr` for the "by polygon" variants)
 
 ## Author
 
