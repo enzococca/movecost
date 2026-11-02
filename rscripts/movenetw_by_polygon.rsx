@@ -17,6 +17,8 @@
 ##Walker_Body_Weight=number 70
 ##Carried_Load_Weight=number 0
 ##N=number 1
+##Terrain=optional raster
+##Terrain_Table=optional file
 ##Speed=number 1
 ##Zoom_Level=number 9
 ##Output_LCPs_netw=output vector
@@ -47,7 +49,7 @@ install_if_missing <- function(packages) {
 # hands rasters over as RasterBrick objects)
 install_if_missing(c("terra", "sf", "igraph", "ggplot2", "raster", "elevatr"))
 
-check_movecost_version <- function(min_version = "3.0.0") {
+check_movecost_version <- function(min_version = "3.1.0") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
         install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
@@ -60,8 +62,9 @@ check_movecost_version <- function(min_version = "3.0.0") {
     }
 }
 
-# movecost >= 3.0.0 is required: the legacy 2.x functions were removed
-check_movecost_version("3.0.0")
+# movecost >= 3.1.0 is required: mc_surface() gains terrain /
+# terrain.table (3.1.0); the legacy 2.x functions stay removed (3.0.0)
+check_movecost_version("3.1.0")
 
 library(sf)
 library(terra)
@@ -73,6 +76,37 @@ get_string_value <- function(val, string_map) {
 }
 
 # --- shared helpers --------------------------------------------------------
+
+# movecost 3.1: optional terrain-factor raster — either numeric (cell value =
+# terrain factor N) or categorical, translated through a CSV with columns
+# class,N. The scalar N of the dialog becomes the fallback for cells without
+# a value; Inf makes a cell impassable. Cost functions that take no terrain
+# factor warn when one is supplied (the analysis still runs).
+mc_read_terrain <- function(x) {
+    if (is.null(x)) return(NULL)
+    if (is.character(x) && !nzchar(x)) return(NULL)
+    if (inherits(x, "SpatRaster")) return(x[[1]])
+    if (is.character(x)) return(terra::rast(x)[[1]])
+    src <- tryCatch(raster::filename(x), error = function(e) "")
+    if (!is.null(src) && nzchar(src) && file.exists(src)) {
+        terra::rast(src)[[1]]
+    } else {
+        terra::rast(x)[[1]]
+    }
+}
+
+mc_read_terrain_table <- function(path) {
+    if (is.null(path) || !is.character(path) || !nzchar(path)) return(NULL)
+    if (!file.exists(path)) {
+        stop(paste("ERROR: terrain table not found:", path))
+    }
+    tb <- utils::read.csv(path, stringsAsFactors = FALSE)
+    names(tb) <- tolower(names(tb))
+    if (!all(c("class", "n") %in% names(tb))) {
+        stop("ERROR: the terrain table must be a CSV with columns 'class' and 'N'.")
+    }
+    data.frame(class = tb$class, N = as.numeric(tb$n))
+}
 
 # Accept the DTM however the QGIS R provider hands it over (RasterBrick /
 # RasterLayer / SpatRaster / file path) and return an in-memory SpatRaster.
@@ -245,6 +279,8 @@ land_boundary <- mc_land_boundary(dtm, CRS)
 
 
 # --- build the cost surface once (movecost 3.0 core) -----------------------
+Terrain_r <- mc_read_terrain(Terrain)
+Terrain_tb <- mc_read_terrain_table(Terrain_Table)
 surf <- mc_surface(
     dtm = dtm,
     funct = Function,
@@ -254,6 +290,8 @@ surf <- mc_surface(
     cogn.slp = Cognitive_Slope,
     topo.dist = Topo_Dist,
     N = N,
+    terrain = Terrain_r,
+    terrain.table = Terrain_tb,
     sl.crit = Critical_Slope,
     W = Walker_Body_Weight,
     L = Carried_Load_Weight,

@@ -7,11 +7,11 @@ name=movecost
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement
-version=4.0.1
+version=4.1.0
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
-about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with the movecost package >= 3.0.0 (terra, sf, igraph, ggplot2; elevatr for the by-polygon variants).
+about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with the movecost package >= 3.1.0 (terra, sf, igraph, ggplot2; elevatr for the by-polygon variants).
 
 tracker=https://github.com/enzococca/movecost/issues
 repository=https://github.com/enzococca/movecost
@@ -23,6 +23,24 @@ hasProcessingProvider=no
 
 # Changelog
 changelog=
+    4.1.0 - movecost R package 3.1.0 (terrain-factor rasters):
+        - All 14 algorithms gain two optional inputs: a Terrain raster
+          (numeric terrain factor N per cell, or a categorical raster of
+          class codes) and a Terrain Table (CSV with columns class,N that
+          translates the classes into factors), passed to mc_surface() /
+          mc_comp() as terrain / terrain.table, new in movecost 3.1.0.
+        - The scalar N parameter becomes the fallback for cells without a
+          terrain value (movecost reports how many cells were filled);
+          Inf in the terrain raster makes a cell impassable; a terrain
+          raster on a different grid or CRS than the DTM is aligned by
+          movecost with nearest-neighbour resampling, with a warning.
+        - Cost functions that take no terrain factor (tofp, icmoffp,
+          icfoffp, alb, ...) now warn when a terrain input is supplied:
+          the warning comes from movecost 3.1.0 and the analysis runs.
+        - Minimum required movecost R package bumped from 3.0.0 to 3.1.0
+          (the scripts install/update it automatically on first run).
+        - In R, mc_terrain_factors() lists the reference terrain factors
+          documented in mc_cost_functions(), to help build the CSV table.
     4.0.1 - Qt6 enum scoping (plugins.qgis.org Qt6 checker, 16 issues):
         - Fully scoped every Qt/QGIS enum flagged by the repository checker:
           Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.
