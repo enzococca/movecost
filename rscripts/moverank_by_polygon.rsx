@@ -54,7 +54,7 @@ install_if_missing <- function(packages) {
 # hands rasters over as RasterBrick objects)
 install_if_missing(c("terra", "sf", "igraph", "ggplot2", "raster", "elevatr"))
 
-check_movecost_version <- function(min_version = "3.1.0") {
+check_movecost_version <- function(min_version = "3.1.1") {
     if (!requireNamespace("movecost", quietly = TRUE)) {
         message("Installing movecost package...")
         install.packages("movecost", repos = "https://cloud.r-project.org/", dependencies = TRUE)
@@ -67,9 +67,11 @@ check_movecost_version <- function(min_version = "3.1.0") {
     }
 }
 
-# movecost >= 3.1.0 is required: mc_surface() gains terrain /
-# terrain.table (3.1.0); the legacy 2.x functions stay removed (3.0.0)
-check_movecost_version("3.1.0")
+# movecost >= 3.1.1 is required: mc_surface() gains terrain / terrain.table
+# (3.1.0) and 3.1.1 corrects the sign of the slope in several cost
+# functions (downhill no longer costs like uphill), so results differ —
+# correctly — from earlier versions; the legacy 2.x functions stay removed
+check_movecost_version("3.1.1")
 
 library(sf)
 library(terra)

@@ -11,7 +11,7 @@ version=4.1.0
 author=Enzo Cocca; Gianmarco Alberti
 email=enzo.ccc@gmail.com
 
-about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with the movecost package >= 3.1.0 (terra, sf, igraph, ggplot2; elevatr for the by-polygon variants).
+about=R script for QGIS for Calculation of Slope-Dependent Accumulated Cost Surface, Least-Cost Paths, and Least-Cost Corridors Related to Human Movement. Based on the movecost R package by Gianmarco Alberti. Requires the Processing R Provider plugin and R with the movecost package >= 3.1.1 (terra, sf, igraph, ggplot2; elevatr for the by-polygon variants).
 
 tracker=https://github.com/enzococca/movecost/issues
 repository=https://github.com/enzococca/movecost
@@ -37,7 +37,14 @@ changelog=
         - Cost functions that take no terrain factor (tofp, icmoffp,
           icfoffp, alb, ...) now warn when a terrain input is supplied:
           the warning comes from movecost 3.1.0 and the analysis runs.
-        - Minimum required movecost R package bumped from 3.0.0 to 3.1.0
+        - movecost 3.1.1 corrects the SIGN OF THE SLOPE in several cost
+          functions (Irmischer-Clarke, Rees, Tripcevich, Herzog,
+          Llobera-Sluckin, Ardigo, Minetti, Pandolf with correction,
+          Van Leusen) and the units of Pandolf/Van Leusen (J/m, kJ) and
+          Hare (kcal): downhill no longer costs like uphill, so results
+          with those functions differ — correctly — from earlier runs,
+          which are worth re-running.
+        - Minimum required movecost R package bumped from 3.0.0 to 3.1.1
           (the scripts install/update it automatically on first run).
         - In R, mc_terrain_factors() lists the reference terrain factors
           documented in mc_cost_functions(), to help build the CSV table.
